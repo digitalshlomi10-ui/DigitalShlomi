@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>ניהול לוח — שערי שלום</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: linear-gradient(160deg, #e8f4fd 0%, #f0f7ff 100%);
+            color: #004d77;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            font-size: 16px;
+        }
+        .top-bar {
+            background: linear-gradient(135deg, #004d77, #0077b6);
+            color: white;
+            padding: 16px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,60,100,0.3);
+        }
+        .top-bar h1 { margin: 0; font-size: 1.3rem; letter-spacing: 0.5px; }
+        .top-bar .subtitle { font-size: 0.85rem; opacity: 0.85; margin-top: 3px; }
+
+        .status-banner {
+            margin: 14px 14px 0;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-banner.ok { background: #d1fae5; border: 2px solid #34d399; color: #065f46; }
+        .status-banner.warn { background: #fef3c7; border: 2px solid #f59e0b; color: #92400e; }
+        .status-banner .count-pill { background: #059669; color: white; border-radius: 20px; padding: 2px 10px; font-size: 0.85rem; }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #dbeeff;
+            position: sticky;
+            top: 65px;
+            z-index: 99;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab.active { color: #0077b6; border-bottom-color: #0077b6; background: #f0f8ff; }
+        .tab-icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+
+        .content { padding: 14px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+            border: 1px solid #cce3f5;
+            box-shadow: 0 2px 10px rgba(0,60,100,0.06);
+        }
+        .card h2 { margin: 0 0 14px 0; font-size: 1.05rem; color: #005b8e; border-bottom: 1px solid #dbeeff; padding-bottom: 10px; }
+
+        label { display: block; margin: 0 0 5px 0; font-size: 0.88rem; color: #005b8e; font-weight: 600; }
+        input, select, textarea {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 10px;
+            border: 1.5px solid #b3d1ff;
+            background: #f8fafd;
+            color: #003d5c;
+            font-size: 1rem;
+            font-family: inherit;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0077b6;
+            background: #fff;
+        }
+        textarea { min-height: 90px; resize: vertical; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: opacity 0.2s, transform 0.1s;
+            margin-bottom: 10px;
+            font-family: inherit;
+            letter-spacing: 0.3px;
+        }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-primary { background: linear-gradient(135deg, #0077b6, #005b8e); color: white; }
+        .btn-green { background: linear-gradient(135deg, #28a745, #1e8035); color: white; }
+        .btn-gray { background: linear-gradient(135deg, #6c757d, #495057); color: white; }
+        .btn-red { background: #dc3545; color: white; }
+        .btn-amber { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-sm {
+            display: inline-block;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .time-preview-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+            font-size: 0.9rem;
+            padding: 8px 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .deceased-item {
+            background: #f0f7ff;
+            border: 1px solid #cce3f5;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .deceased-item .name { font-weight: bold; font-size: 0.95rem; color: #004d77; }
+        .deceased-item .date { font-size: 0.82rem; color: #5a7a8a; margin-top: 2px; }
+        .deceased-item .actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #065f46;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            z-index: 999;
+            white-space: nowrap;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .mode-select { margin-bottom: 8px; }
+
+        .import-label {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+
+        .empty-list { text-align: center; color: #9ca3af; padding: 20px; font-size: 0.9rem; }
+
+        .parasha-hint { font-size: 0.85rem; color: #5a7a8a; margin-bottom: 12px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>⚙️ ניהול לוח בית הכנסת</h1>
+    <div class="subtitle">שערי שלום ליעקב</div>
+</div>
+
+<div id="statusBanner" class="status-banner warn">⏳ טוען...</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('tab-niftarim')">
+        <span class="tab-icon">🕯️</span>נפטרים
+    </div>
+    <div class="tab" onclick="showTab('tab-prayers')">
+        <span class="tab-icon">🕍</span>תפילות
+    </div>
+    <div class="tab" onclick="showTab('tab-shabbat')">
+        <span class="tab-icon">✡️</span>שבת
+    </div>
+    <div class="tab" onclick="showTab('tab-settings')">
+        <span class="tab-icon">📢</span>הגדרות
+    </div>
+    <div class="tab" onclick="showTab('tab-backup')">
+        <span class="tab-icon">💾</span>גיבוי
+    </div>
+</div>
+
+<div class="content">
+
+    <!-- נפטרים -->
+    <div class="panel active" id="tab-niftarim">
+        <div class="card">
+            <h2>➕ הוסף נפטר חדש</h2>
+            <label>שם הנפטר/ת:</label>
+            <input type="text" id="decName" placeholder='ישראל בן משה ז"ל'>
+            <div class="section-row">
+                <div>
+                    <label>יום עברי:</label>
+                    <select id="decDay">
+                        <option value="1">א'</option><option value="2">ב'</option><option value="3">ג'</option>
+                        <option value="4">ד'</option><option value="5">ה'</option><option value="6">ו'</option>
+                        <option value="7">ז'</option><option value="8">ח'</option><option value="9">ט'</option>
+                        <option value="10">י'</option><option value="11">י"א</option><option value="12">י"ב</option>
+                        <option value="13">י"ג</option><option value="14">י"ד</option><option value="15">ט"ו</option>
+                        <option value="16">ט"ז</option><option value="17">י"ז</option><option value="18">י"ח</option>
+                        <option value="19">י"ט</option><option value="20">כ'</option><option value="21">כ"א</option>
+                        <option value="22">כ"ב</option><option value="23">כ"ג</option><option value="24">כ"ד</option>
+                        <option value="25">כ"ה</option><option value="26">כ"ו</option><option value="27">כ"ז</option>
+                        <option value="28">כ"ח</option><option value="29">כ"ט</option><option value="30">ל'</option>
+                    </select>
+                </div>
+                <div>
+                    <label>חודש עברי:</label>
+                    <select id="decMonth">
+                        <option>תשרי</option><option>חשוון</option><option>כסלו</option><option>טבת</option>
+                        <option>שבט</option><option>אדר</option><option>אדר א</option><option>אדר ב</option>
+                        <option>ניסן</option><option>אייר</option><option>סיוון</option><option>תמוז</option>
+                        <option>אב</option><option>אלול</option>
+                    </select>
+                </div>
+            </div>
+            <label>שנת פטירה (אופציונלי):</label>
+            <input type="text" id="decYear" placeholder='תשפ"ה'>
+            <button class="btn btn-green" onclick="addDeceased()">+ הוסף לרשימה</button>
+        </div>
+
+        <div class="card">
+            <h2 id="listTitle">רשימת הנפטרים</h2>
+            <div id="deceasedListContainer">
+                <div class="empty-list">אין נפטרים ברשימה</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- תפילות חול -->
+    <div class="panel" id="tab-prayers">
+        <div class="card">
+            <h2>תפילות חול</h2>
+            <label>שחרית חול:</label>
+            <input type="time" id="shacharitTime" value="05:45">
+
+            <label>מנחה חול:</label>
+            <select id="minchaMode" class="mode-select" onchange="toggleInputs()">
+                <option value="auto">אוטומטי לפי שקיעה</option>
+                <option value="manual">שעה קבועה</option>
+            </select>
+            <div id="minchaAutoDiv">
+                <label>דקות לפני שקיעה (מספר שלילי):</label>
+                <input type="number" id="minchaOffset" value="-20" oninput="updatePreviews()">
+                <div class="time-preview-box" id="minchaPreview">מחושב...</div>
+            </div>
+            <div id="minchaManualDiv" style="display:none">
+                <label>שעה קבועה:</label>
+                <input type="time" id="minchaTime" value="18:30">
+            </div>
+
+            <label>ערבית חול:</label>
+            <select id="arvitMode" class="mode-select" onchange="toggleInputs()">
+                <option value="auto">אוטומטי לפי שקיעה</option>
+                <option value="manual">שעה קבועה</option>
+            </select>
+            <div id="arvitAutoDiv">
+                <label>דקות אחרי שקיעה:</label>
+                <input type="number" id="arvitOffset" value="20" oninput="updatePreviews()">
+                <div class="time-preview-box" id="arvitPreview">מחושב...</div>
+            </div>
+            <div id="arvitManualDiv" style="display:none">
+                <label>שעה קבועה:</label>
+                <input type="time" id="arvitTime" value="19:30">
+            </div>
+
+            <button class="btn btn-primary" onclick="saveAll()">💾 שמור</button>
+        </div>
+    </div>
+
+    <!-- שבת -->
+    <div class="panel" id="tab-shabbat">
+        <div class="card">
+            <h2>תפילות שבת קודש</h2>
+            <label>מנחה ערב שבת:</label>
+            <input type="text" id="shabbatMinchaErev" placeholder="15 דק' לאחר נרות">
+            <label>שחרית שבת:</label>
+            <input type="time" id="shabbatShacharit" value="08:00">
+            <label>מנחה שבת:</label>
+            <input type="time" id="shabbatMincha" value="18:00">
+            <label>ערבית מוצאי שבת:</label>
+            <input type="text" id="shabbatArvitMotzei" placeholder="20 דק' לאחר שקיעה">
+            <button class="btn btn-primary" onclick="saveAll()">💾 שמור</button>
+        </div>
+
+        <div class="card">
+            <h2>📖 כיוון פרשת השבוע</h2>
+            <p class="parasha-hint">אם הפרשה שגויה — בחר פרשה נכונה ולחץ עדכן:</p>
+            <select id="parashaSelect">
+                <option value="0">בראשית</option><option value="1">נח</option>
+                <option value="2">לך לך</option><option value="3">וירא</option>
+                <option value="4">חיי שרה</option><option value="5">תולדות</option>
+                <option value="6">ויצא</option><option value="7">וישלח</option>
+                <option value="8">וישב</option><option value="9">מקץ</option>
+                <option value="10">ויגש</option><option value="11">ויחי</option>
+                <option value="12">שמות</option><option value="13">וארא</option>
+                <option value="14">בא</option><option value="15">בשלח</option>
+                <option value="16">יתרו</option><option value="17">משפטים</option>
+                <option value="18">תרומה</option><option value="19">תצוה</option>
+                <option value="20">כי תשא</option><option value="21">ויקהל-פקודי</option>
+                <option value="22">ויקרא</option><option value="23">צו</option>
+                <option value="24">שמיני</option><option value="25">תזריע-מצורע</option>
+                <option value="26">אחרי מות-קדושים</option><option value="27">אמור</option>
+                <option value="28">בהר-בחוקותי</option><option value="29">במדבר</option>
+                <option value="30">נשא</option><option value="31">בהעלותך</option>
+                <option value="32">שלח</option><option value="33">קורח</option>
+                <option value="34">חוקת</option><option value="35">בלק</option>
+                <option value="36">פנחס</option><option value="37">מטות-מסעי</option>
+                <option value="38">דברים</option><option value="39">ואתחנן</option>
+                <option value="40">עקב</option><option value="41">ראה</option>
+                <option value="42">שופטים</option><option value="43">כי תצא</option>
+                <option value="44">כי תבוא</option><option value="45">נצבים-וילך</option>
+                <option value="46">האזינו</option><option value="47">וזאת הברכה</option>
+            </select>
+            <button class="btn btn-amber" onclick="calibrateParasha()">🔄 עדכן פרשה</button>
+        </div>
+    </div>
+
+    <!-- הגדרות -->
+    <div class="panel" id="tab-settings">
+        <div class="card">
+            <h2>הגדרות תצוגה</h2>
+            <label>זמן כל דף (שניות):</label>
+            <input type="number" id="pageInterval" value="10" min="3" max="120">
+        </div>
+        <div class="card">
+            <h2>📢 הודעות רצות</h2>
+            <label>טקסט בתחתית המסך:</label>
+            <textarea id="announcementText" placeholder="הקלד כאן הודעות גבאי, הקדשות, אירועים..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveAll()">💾 שמור הכל</button>
+    </div>
+
+    <!-- גיבוי -->
+    <div class="panel" id="tab-backup">
+        <div class="card">
+            <h2>📋 גיבוי JSON (מלא)</h2>
+            <p style="font-size:0.88rem;color:#5a7a8a;margin:0 0 12px 0;">שומר הכל: הגדרות + נפטרים. מומלץ לגיבוי שוטף.</p>
+            <button class="btn btn-primary" onclick="exportJSON()">📥 ייצא JSON</button>
+            <label class="import-label btn-gray btn" style="background:linear-gradient(135deg,#6c757d,#495057);color:white;">
+                📤 ייבא JSON
+                <input type="file" accept=".json" onchange="importJSON(event)" style="display:none;">
+            </label>
+        </div>
+        <div class="card">
+            <h2>📊 ייבוא/ייצוא CSV — נפטרים</h2>
+            <p style="font-size:0.88rem;color:#5a7a8a;margin:0 0 12px 0;">ייבא CSV פעם אחת — הנפטרים יישמרו לצמיתות ולא תצטרך לייבא שוב.</p>
+            <button class="btn" style="background:linear-gradient(135deg,#198754,#146c43);color:white;" onclick="exportCSV()">📥 ייצא CSV</button>
+            <label class="import-label btn" style="background:linear-gradient(135deg,#6c757d,#495057);color:white;">
+                📤 ייבא CSV נפטרים
+                <input type="file" accept=".csv" onchange="importCSV(event)" style="display:none;">
+            </label>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+    let deceasedArray = [];
+
+    const dayLettersMap = {
+        1:"א'", 2:"ב'", 3:"ג'", 4:"ד'", 5:"ה'", 6:"ו'", 7:"ז'", 8:"ח'", 9:"ט'", 10:"י'",
+        11:'י"א', 12:'י"ב', 13:'י"ג', 14:'י"ד', 15:'ט"ו', 16:'ט"ז', 17:'י"ז', 18:'י"ח',
+        19:'י"ט', 20:"כ'", 21:'כ"א', 22:'כ"ב', 23:'כ"ג', 24:'כ"ד', 25:'כ"ה',
+        26:'כ"ו', 27:'כ"ז', 28:'כ"ח', 29:'כ"ט', 30:"ל'"
+    };
+
+    function showTab(id) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function showToast(msg, color) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = color || '#065f46';
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function getSunsetForMonth() {
+        const m = new Date().getMonth() + 1;
+        const data = {
+            1:"16:58",2:"17:26",3:"17:49",4:"19:12",5:"19:36",6:"19:52",
+            7:"19:51",8:"19:27",9:"18:46",10:"18:04",11:"16:42",12:"16:41"
+        };
+        return data[m] || "19:52";
+    }
+
+    function offsetTime(timeStr, offset) {
+        const [h0,m0] = timeStr.split(':').map(Number);
+        let total = h0*60 + m0 + offset;
+        total = ((total%1440)+1440)%1440;
+        return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+    }
+
+    function updatePreviews() {
+        const sunset = getSunsetForMonth();
+        const mOff = parseInt(document.getElementById('minchaOffset').value);
+        const aOff = parseInt(document.getElementById('arvitOffset').value);
+        if (!isNaN(mOff)) {
+            const label = mOff < 0 ? `${Math.abs(mOff)} דק' לפני שקיעה` : `${mOff} דק' אחרי שקיעה`;
+            document.getElementById('minchaPreview').textContent = `⏰ ${offsetTime(sunset,mOff)} (${label})`;
+        }
+        if (!isNaN(aOff)) {
+            const label = aOff < 0 ? `${Math.abs(aOff)} דק' לפני שקיעה` : `${aOff} דק' אחרי שקיעה`;
+            document.getElementById('arvitPreview').textContent = `⏰ ${offsetTime(sunset,aOff)} (${label})`;
+        }
+    }
+
+    function toggleInputs() {
+        const m = document.getElementById('minchaMode').value;
+        document.getElementById('minchaAutoDiv').style.display = m === 'auto' ? 'block' : 'none';
+        document.getElementById('minchaManualDiv').style.display = m === 'manual' ? 'block' : 'none';
+        const a = document.getElementById('arvitMode').value;
+        document.getElementById('arvitAutoDiv').style.display = a === 'auto' ? 'block' : 'none';
+        document.getElementById('arvitManualDiv').style.display = a === 'manual' ? 'block' : 'none';
+        updatePreviews();
+    }
+
+    function addDeceased() {
+        const name = document.getElementById('decName').value.trim();
+        if (!name) { showToast('נא להקליד שם נפטר', '#dc3545'); return; }
+        const dayNum = parseInt(document.getElementById('decDay').value);
+        const month = document.getElementById('decMonth').value;
+        const year = document.getElementById('decYear').value.trim() || '';
+        deceasedArray.push({ name, day: dayNum, month, year });
+        document.getElementById('decName').value = '';
+        document.getElementById('decYear').value = '';
+        renderDeceasedList();
+        saveAll(true);
+        showToast(`✅ ${name} נוסף/ה לרשימה`);
+    }
+
+    function removeDeceased(index) {
+        if (!confirm(`למחוק את ${deceasedArray[index].name}?`)) return;
+        deceasedArray.splice(index, 1);
+        renderDeceasedList();
+        saveAll(true);
+        showToast('🗑️ הנפטר הוסר מהרשימה', '#6c757d');
+    }
+
+    function renderDeceasedList() {
+        const container = document.getElementById('deceasedListContainer');
+        const title = document.getElementById('listTitle');
+        if (deceasedArray.length === 0) {
+            container.innerHTML = '<div class="empty-list">אין נפטרים ברשימה</div>';
+            title.textContent = 'רשימת הנפטרים';
+            return;
+        }
+        title.textContent = `רשימת הנפטרים (${deceasedArray.length})`;
+        container.innerHTML = deceasedArray.map((item, idx) => {
+            const dayText = dayLettersMap[item.day] || item.day;
+            const yearText = item.year ? ` ${item.year}` : '';
+            return `<div class="deceased-item">
+                <div>
+                    <div class="name">${item.name}</div>
+                    <div class="date">${dayText} ב${item.month}${yearText}</div>
+                </div>
+                <div class="actions">
+                    <button class="btn-sm" style="background:#dc3545;color:white;" onclick="removeDeceased(${idx})">מחק</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function updateStatusBanner() {
+        const banner = document.getElementById('statusBanner');
+        const count = deceasedArray.length;
+        if (count > 0) {
+            banner.className = 'status-banner ok';
+            banner.innerHTML = `✅ נטען אוטומטית — <span class="count-pill">${count} נפטרים</span>`;
+        } else {
+            banner.className = 'status-banner warn';
+            banner.innerHTML = `⚠️ אין נפטרים שמורים — ייבא CSV בלשונית גיבוי`;
+        }
+    }
+
+    function saveAll(silent) {
+        const config = {
+            pageInterval: document.getElementById('pageInterval').value,
+            announcement: document.getElementById('announcementText').value,
+            shacharitTime: document.getElementById('shacharitTime').value,
+            minchaMode: document.getElementById('minchaMode').value,
+            minchaTime: document.getElementById('minchaTime').value,
+            minchaOffset: document.getElementById('minchaOffset').value,
+            arvitMode: document.getElementById('arvitMode').value,
+            arvitTime: document.getElementById('arvitTime').value,
+            arvitOffset: document.getElementById('arvitOffset').value,
+            shabbatMinchaErev: document.getElementById('shabbatMinchaErev').value,
+            shabbatShacharit: document.getElementById('shabbatShacharit').value,
+            shabbatMincha: document.getElementById('shabbatMincha').value,
+            shabbatArvitMotzei: document.getElementById('shabbatArvitMotzei').value,
+            deceasedList: deceasedArray
+        };
+        localStorage.setItem('synagogue_config', JSON.stringify(config));
+        updateStatusBanner();
+
+        // שמור ב-Firebase
+        if (window._firestoreDb) {
+            const { doc, setDoc } = window._firestoreFns;
+            setDoc(doc(window._firestoreDb, "synagogue", "config"), config)
+                .then(() => { if (!silent) showToast('✅ נשמר ועודכן הלוח!'); })
+                .catch(() => { if (!silent) showToast('⚠️ שמור מקומית בלבד', '#f59e0b'); });
+        } else {
+            if (!silent) showToast('✅ נשמר!');
+        }
+        return config;
+    }
+
+    function exportJSON() {
+        const config = saveAll(true);
+        const blob = new Blob([JSON.stringify(config,null,2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `synagogue_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const config = JSON.parse(e.target.result);
+                localStorage.setItem('synagogue_config', JSON.stringify(config));
+                loadFromStorage();
+                showToast('✅ ייבוא JSON הצליח!');
+            } catch { showToast('❌ שגיאה בקובץ JSON', '#dc3545'); }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+
+    function exportCSV() {
+        const BOM = '\uFEFF';
+        let csv = BOM + 'שם,יום,חודש,שנה\n';
+        deceasedArray.forEach(item => {
+            const wrap = v => String(v).includes(',') ? `"${v}"` : String(v);
+            csv += `${wrap(item.name)},${wrap(item.day)},${wrap(item.month)},${wrap(item.year||'')}\n`;
+        });
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `niftarim_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const text = e.target.result.replace(/^\uFEFF/,'');
+                const lines = text.split(/\r?\n/).filter(l => l.trim());
+                const startIdx = (lines[0].includes('שם') || lines[0].toLowerCase().includes('name')) ? 1 : 0;
+                const imported = [];
+                for (let i = startIdx; i < lines.length; i++) {
+                    const cols = lines[i].match(/(".*?"|[^,]+)(?=,|$)/g) || [];
+                    const clean = cols.map(c => c.replace(/^"|"$/g,'').trim());
+                    const [name,day,month,year] = clean;
+                    if (!name||!day||!month) continue;
+                    const dayNum = parseInt(day);
+                    if (isNaN(dayNum)||dayNum<1||dayNum>30) continue;
+                    imported.push({name,day:dayNum,month,year:year||''});
+                }
+                if (imported.length===0) { showToast('⚠️ לא נמצאו נפטרים בקובץ','#f59e0b'); return; }
+                const existing = new Set(deceasedArray.map(d=>d.name));
+                const newItems = imported.filter(d=>!existing.has(d.name));
+                deceasedArray = [...deceasedArray,...newItems];
+                renderDeceasedList();
+                saveAll(true);
+                showToast(`✅ יובאו ${imported.length} נפטרים (${newItems.length} חדשים)`);
+            } catch { showToast('❌ שגיאה בקריאת CSV','#dc3545'); }
+            event.target.value = '';
+        };
+        reader.readAsText(file,'UTF-8');
+    }
+
+    function calibrateParasha() {
+        const idx = parseInt(document.getElementById('parashaSelect').value);
+        const today = new Date();
+        const sat = new Date(today);
+        sat.setDate(today.getDate() + ((6-today.getDay()+7)%7));
+        sat.setHours(0,0,0,0);
+        localStorage.setItem('parasha_anchor', JSON.stringify({date:sat.toISOString(),idx}));
+        saveAll(true);
+        showToast('✅ הפרשה עודכנה!');
+    }
+
+    function loadFromStorage() {
+        try {
+            const stored = localStorage.getItem('synagogue_config');
+            if (stored) {
+                const config = JSON.parse(stored);
+                if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+                document.getElementById('announcementText').value = config.announcement || '';
+                document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
+                document.getElementById('minchaMode').value = config.minchaMode || 'auto';
+                document.getElementById('minchaTime').value = config.minchaTime || '18:30';
+                document.getElementById('minchaOffset').value = config.minchaOffset !== undefined ? config.minchaOffset : '-20';
+                document.getElementById('arvitMode').value = config.arvitMode || 'auto';
+                document.getElementById('arvitTime').value = config.arvitTime || '19:30';
+                document.getElementById('arvitOffset').value = config.arvitOffset !== undefined ? config.arvitOffset : '20';
+                document.getElementById('shabbatMinchaErev').value = config.shabbatMinchaErev || '';
+                document.getElementById('shabbatShacharit').value = config.shabbatShacharit || '08:00';
+                document.getElementById('shabbatMincha').value = config.shabbatMincha || '18:00';
+                document.getElementById('shabbatArvitMotzei').value = config.shabbatArvitMotzei || '';
+                deceasedArray = config.deceasedList || [];
+                renderDeceasedList();
+            }
+        } catch(e) { console.error(e); }
+        toggleInputs();
+        updateStatusBanner();
+    }
+
+    loadFromStorage();
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCZIxHuEyiCkzQVoZIa1fG5yZwoHA_y8zg",
+        authDomain: "ai-screen-77c8e.firebaseapp.com",
+        projectId: "ai-screen-77c8e",
+        storageBucket: "ai-screen-77c8e.firebasestorage.app",
+        messagingSenderId: "753205820340",
+        appId: "1:753205820340:web:1072073f4758b63b8990e1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window._firestoreDb = db;
+    window._firestoreFns = { doc, setDoc };
+
+    // טען מ-Firebase בפתיחה
+    try {
+        const docSnap = await getDoc(doc(db, "synagogue", "config"));
+        if (docSnap.exists()) {
+            const config = docSnap.data();
+            localStorage.setItem('synagogue_config', JSON.stringify(config));
+            // עדכן טפסים
+            if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+            document.getElementById('announcementText').value = config.announcement || '';
+            document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
+            document.getElementById('minchaMode').value = config.minchaMode || 'auto';
+            document.getElementById('minchaTime').value = config.minchaTime || '18:30';
+            document.getElementById('minchaOffset').value = config.minchaOffset !== undefined ? config.minchaOffset : '-20';
+            document.getElementById('arvitMode').value = config.arvitMode || 'auto';
+            document.getElementById('arvitTime').value = config.arvitTime || '19:30';
+            document.getElementById('arvitOffset').value = config.arvitOffset !== undefined ? config.arvitOffset : '20';
+            document.getElementById('shabbatMinchaErev').value = config.shabbatMinchaErev || '';
+            document.getElementById('shabbatShacharit').value = config.shabbatShacharit || '08:00';
+            document.getElementById('shabbatMincha').value = config.shabbatMincha || '18:00';
+            document.getElementById('shabbatArvitMotzei').value = config.shabbatArvitMotzei || '';
+            deceasedArray = config.deceasedList || [];
+            renderDeceasedList();
+            toggleInputs();
+            updateStatusBanner();
+
+            const banner = document.getElementById('statusBanner');
+            const count = deceasedArray.length;
+            if (count > 0) {
+                banner.className = 'status-banner ok';
+                banner.innerHTML = `☁️ נטען מהענן — <span class="count-pill">${count} נפטרים</span>`;
+            }
+        }
+    } catch(e) {
+        console.log('Firebase load:', e);
+    }
+</script>
+</body>
+</html>

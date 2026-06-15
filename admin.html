@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>פאנל ניהול - שערי שלום ליעקב</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 100%);
+            color: #004d77;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 30px 20px;
+            max-width: 700px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+        h1 {
+            color: #003d5c;
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0077b6;
+            letter-spacing: 1px;
+        }
+        .section {
+            background: #ffffff;
+            padding: 22px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            border: 1px solid #cce3f5;
+            box-shadow: 0 3px 12px rgba(0,60,100,0.07);
+        }
+        h2 {
+            margin-top: 0;
+            color: #005b8e;
+            font-size: 1.25rem;
+            border-bottom: 1px solid #dbeeff;
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+        }
+        label {
+            display: block;
+            margin: 12px 0 5px;
+            color: #005b8e;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1.5px solid #b3d1ff;
+            background: #f8fafd;
+            color: #003d5c;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0077b6;
+            background: #fff;
+        }
+        textarea { min-height: 80px; resize: vertical; }
+        .grid-4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; }
+        .auto-badge {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0077b6;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-right: 6px;
+            font-weight: 700;
+            vertical-align: middle;
+        }
+        .time-preview {
+            display: inline-block;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+            font-size: 0.9rem;
+            padding: 4px 12px;
+            border-radius: 8px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+        .btn {
+            background: linear-gradient(135deg, #0077b6, #005b8e);
+            color: white;
+            padding: 13px;
+            border: none;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: opacity 0.2s, transform 0.1s;
+            letter-spacing: 0.5px;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .hidden { display: none; }
+        .btn-add {
+            background: linear-gradient(135deg, #28a745, #1e8035);
+            margin-top: 10px;
+            font-size: 1rem;
+            padding: 10px;
+        }
+        .deceased-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f0f7ff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-top: 8px;
+            border: 1px solid #cce3f5;
+        }
+        .btn-del {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: auto;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .btn-del:hover { background: #b02a37; }
+        .btn-edit {
+            background: #e8a000;
+            color: white;
+            border: none;
+            padding: 5px 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: auto;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .btn-edit:hover { background: #c98600; }
+        .btn-export {
+            background: linear-gradient(135deg, #0077b6, #005b8e);
+            flex: 1;
+        }
+        .btn-import {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            flex: 1;
+            transition: opacity 0.2s;
+            display: block;
+        }
+        .btn-import:hover { opacity: 0.9; }
+        .backup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .backup-card { background: #f0f7ff; border: 1px solid #cce3f5; border-radius: 12px; padding: 16px; }
+        .backup-title { font-weight: 700; color: #004d77; font-size: 1rem; margin-bottom: 6px; }
+        .backup-desc { font-size: 0.88rem; color: #5a7a8a; margin-bottom: 12px; line-height: 1.4; }
+        .backup-hint { background: #f8fafd; border: 1px dashed #b3d1ff; border-radius: 8px; padding: 12px 16px; font-size: 0.88rem; color: #4a6070; line-height: 1.8; }
+        .backup-hint code { background: #e0eeff; border-radius: 4px; padding: 1px 5px; font-family: monospace; direction: ltr; display: inline-block; }
+        .save-success {
+            display: none;
+            background: #d1fae5;
+            border: 1px solid #6ee7b7;
+            color: #065f46;
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 12px;
+            font-size: 1.05rem;
+        }
+        .offset-row { display: flex; align-items: center; gap: 10px; }
+        .offset-row input { flex: 0 0 90px; }
+        .offset-row .time-preview { flex: 1; }
+    </style>
+</head>
+<body>
+    <h1>⚙️ ניהול לוח בית הכנסת</h1>
+
+    <form id="adminForm">
+        <!-- הגדרות תצוגה -->
+        <div class="section">
+            <h2>הגדרות תצוגה</h2>
+            <label>זמן תצוגה לכל דף (שניות):</label>
+            <input type="number" id="pageInterval" value="10" min="3" max="120">
+        </div>
+
+        <!-- שורת הודעות -->
+        <div class="section">
+            <h2>שורת הודעות רצות</h2>
+            <label>הטקסט שיופיע בתחתית המסך:</label>
+            <textarea id="announcementText" placeholder="הקלד כאן הודעות גבאי, הקדשות, אירועים..."></textarea>
+        </div>
+
+        <!-- זמני תפילות חול -->
+        <div class="section">
+            <h2>זמני תפילות חול</h2>
+            <label>שחרית חול:</label>
+            <input type="time" id="shacharitTime" value="05:45">
+
+            <label>מנחה חול:</label>
+            <select id="minchaMode" onchange="toggleInputs()">
+                <option value="auto" selected>אוטומטי לפי שקיעה</option>
+                <option value="manual">שעה קבועה</option>
+            </select>
+            <div id="minchaAutoInput">
+                <label>דקות ביחס לשקיעה (מספר שלילי = לפני, חיובי = אחרי):</label>
+                <div class="offset-row">
+                    <input type="number" id="minchaOffset" value="-20" min="-120" max="120" oninput="updatePreviews()">
+                    <span class="time-preview" id="minchaPreview">מחושב...</span>
+                </div>
+            </div>
+            <div id="minchaManualInput" class="hidden">
+                <label>שעה קבועה למנחה:</label>
+                <input type="time" id="minchaTime" value="18:30">
+            </div>
+
+            <label>ערבית חול:</label>
+            <select id="arvitMode" onchange="toggleInputs()">
+                <option value="auto" selected>אוטומטי לפי שקיעה</option>
+                <option value="manual">שעה קבועה</option>
+            </select>
+            <div id="arvitAutoInput">
+                <label>דקות ביחס לשקיעה (מספר שלילי = לפני, חיובי = אחרי):</label>
+                <div class="offset-row">
+                    <input type="number" id="arvitOffset" value="20" min="-120" max="120" oninput="updatePreviews()">
+                    <span class="time-preview" id="arvitPreview">מחושב...</span>
+                </div>
+            </div>
+            <div id="arvitManualInput" class="hidden">
+                <label>שעה קבועה לערבית:</label>
+                <input type="time" id="arvitTime" value="19:30">
+            </div>
+        </div>
+
+        <!-- זמני תפילות שבת -->
+        <div class="section">
+            <h2>זמני תפילות שבת קודש</h2>
+            <label>מנחה ערב שבת (שעה או טקסט):</label>
+            <input type="text" id="shabbatMinchaErev" value="15 דקות לאחר הדלקת נרות">
+            <label>שחרית שבת:</label>
+            <input type="time" id="shabbatShacharit" value="08:00">
+            <label>מנחה שבת:</label>
+            <input type="time" id="shabbatMincha" value="18:00">
+            <label>ערבית מוצאי שבת (שעה או טקסט):</label>
+            <input type="text" id="shabbatArvitMotzei" value="20 דקות לאחר השקיעה">
+        </div>
+
+        <!-- ניהול נפטרים -->
+        <div class="section">
+            <h2>הנצחת נפטרים ואזכרות השבוע</h2>
+            <div class="grid-4">
+                <div>
+                    <label>שם הנפטר/ת:</label>
+                    <input type="text" id="decName" placeholder="ישראל בן משה ז''ל">
+                </div>
+                <div>
+                    <label>יום עברי:</label>
+                    <select id="decDayLetter">
+                        <option value="1">א'</option><option value="2">ב'</option><option value="3">ג'</option>
+                        <option value="4">ד'</option><option value="5">ה'</option><option value="6">ו'</option>
+                        <option value="7">ז'</option><option value="8">ח'</option><option value="9">ט'</option>
+                        <option value="10">י'</option><option value="11">י"א</option><option value="12">י"ב</option>
+                        <option value="13">י"ג</option><option value="14">י"ד</option><option value="15">ט"ו</option>
+                        <option value="16">ט"ז</option><option value="17">י"ז</option><option value="18">י"ח</option>
+                        <option value="19">י"ט</option><option value="20">כ'</option><option value="21">כ"א</option>
+                        <option value="22">כ"ב</option><option value="23">כ"ג</option><option value="24">כ"ד</option>
+                        <option value="25">כ"ה</option><option value="26">כ"ו</option><option value="27">כ"ז</option>
+                        <option value="28">כ"ח</option><option value="29">כ"ט</option><option value="30">ל'</option>
+                    </select>
+                </div>
+                <div>
+                    <label>חודש עברי:</label>
+                    <select id="decMonth">
+                        <option>תשרי</option><option>חשוון</option><option>כסלו</option><option>טבת</option>
+                        <option>שבט</option><option>אדר</option><option>אדר א</option><option>אדר ב</option>
+                        <option>ניסן</option><option>אייר</option><option>סיוון</option><option>תמוז</option>
+                        <option>אב</option><option>אלול</option>
+                    </select>
+                </div>
+                <div>
+                    <label>שנת פטירה:</label>
+                    <input type="text" id="decYear" placeholder='ה'"תשפ"ב'>
+                </div>
+            </div>
+            <button type="button" class="btn btn-add" onclick="addDeceased()">+ הוסף נפטר לרשימה</button>
+            <label style="margin-top:15px;">רשימת הנפטרים השמורה:</label>
+            <div id="deceasedListContainer"></div>
+        </div>
+
+        <button type="button" class="btn" onclick="saveSettings()">💾 שמור וסנכרן לוח דיגיטלי</button>
+        <div class="save-success" id="saveSuccess">✅ הנתונים נשמרו בהצלחה!</div>
+
+        <!-- כיוון פרשת השבוע -->
+        <div class="section">
+            <h2>📖 כיוון פרשת השבוע</h2>
+            <p style="color:#5a7a8a;font-size:0.95rem;margin:0 0 14px 0;">
+                אם הפרשה המוצגת שגויה (בד"כ בתחילת שנה), בחר את הפרשה הנכונה לשבת הקרובה ולחץ עדכן.
+            </p>
+            <div style="display:flex;gap:10px;align-items:flex-end;">
+                <div style="flex:1;">
+                    <label>פרשת השבוע הנכונה:</label>
+                    <select id="parashaSelect">
+                        <option value="0">בראשית</option><option value="1">נח</option>
+                        <option value="2">לך לך</option><option value="3">וירא</option>
+                        <option value="4">חיי שרה</option><option value="5">תולדות</option>
+                        <option value="6">ויצא</option><option value="7">וישלח</option>
+                        <option value="8">וישב</option><option value="9">מקץ</option>
+                        <option value="10">ויגש</option><option value="11">ויחי</option>
+                        <option value="12">שמות</option><option value="13">וארא</option>
+                        <option value="14">בא</option><option value="15">בשלח</option>
+                        <option value="16">יתרו</option><option value="17">משפטים</option>
+                        <option value="18">תרומה</option><option value="19">תצוה</option>
+                        <option value="20">כי תשא</option><option value="21">ויקהל-פקודי</option>
+                        <option value="22">ויקרא</option><option value="23">צו</option>
+                        <option value="24">שמיני</option><option value="25">תזריע-מצורע</option>
+                        <option value="26">אחרי מות-קדושים</option><option value="27">אמור</option>
+                        <option value="28">בהר-בחוקותי</option><option value="29">במדבר</option>
+                        <option value="30">נשא</option><option value="31">בהעלותך</option>
+                        <option value="32">שלח</option><option value="33" selected>קורח</option>
+                        <option value="34">חוקת</option><option value="35">בלק</option>
+                        <option value="36">פנחס</option><option value="37">מטות-מסעי</option>
+                        <option value="38">דברים</option><option value="39">ואתחנן</option>
+                        <option value="40">עקב</option><option value="41">ראה</option>
+                        <option value="42">שופטים</option><option value="43">כי תצא</option>
+                        <option value="44">כי תבוא</option><option value="45">נצבים-וילך</option>
+                        <option value="46">האזינו</option>
+                    </select>
+                </div>
+                <button type="button" class="btn" style="width:auto;padding:10px 20px;margin-top:0;" onclick="calibrateParasha()">🔄 עדכן עוגן</button>
+            </div>
+            <div class="save-success" id="parashaSuccess" style="margin-top:10px;">✅ עוגן הפרשה עודכן!</div>
+        </div>
+            <p style="color:#5a7a8a;font-size:0.95rem;margin:0 0 16px 0;">
+                ייצא את ההגדרות ורשימת הנפטרים לקובץ לשמירה קבועה. JSON שומר <strong>הכל</strong> (הגדרות + נפטרים). CSV שומר רק את <strong>רשימת הנפטרים</strong> ונוח לעריכה ב-Excel.
+            </p>
+
+            <div class="backup-grid">
+                <!-- JSON -->
+                <div class="backup-card">
+                    <div class="backup-title">📋 JSON — גיבוי מלא</div>
+                    <div class="backup-desc">כל ההגדרות + רשימת נפטרים. מומלץ לגיבוי שוטף.</div>
+                    <button type="button" class="btn btn-export" onclick="exportJSON()">📥 ייצא JSON</button>
+                    <label class="btn btn-import" style="cursor:pointer;text-align:center;margin-top:8px;display:block;">
+                        📤 ייבא JSON
+                        <input type="file" accept=".json" onchange="importJSON(event)" style="display:none;">
+                    </label>
+                </div>
+
+                <!-- CSV -->
+                <div class="backup-card">
+                    <div class="backup-title">📊 CSV — רשימת נפטרים</div>
+                    <div class="backup-desc">רק הנפטרים. נוח לעריכה ב-Excel / Notepad ואז ייבוא.</div>
+                    <button type="button" class="btn btn-export" style="background:linear-gradient(135deg,#198754,#146c43);" onclick="exportCSV()">📥 ייצא CSV</button>
+                    <label class="btn btn-import" style="cursor:pointer;text-align:center;margin-top:8px;display:block;background:linear-gradient(135deg,#6c757d,#495057);">
+                        📤 ייבא CSV
+                        <input type="file" accept=".csv" onchange="importCSV(event)" style="display:none;">
+                    </label>
+                </div>
+            </div>
+
+            <div class="backup-hint">
+                <strong>פורמט CSV לעריכה ידנית:</strong><br>
+                <code>שם,יום,חודש,שנה</code><br>
+                <code>ישראל בן משה,15,תשרי,ה'תשפ"ב</code><br>
+                <code>שרה בת יעקב,3,אייר,ה'תשפ"ג</code>
+            </div>
+
+            <div class="save-success" id="importSuccess" style="margin-top:10px;">✅ הנתונים יובאו בהצלחה!</div>
+        </div>
+    </form>
+
+    <script>
+        let deceasedArray = [];
+
+        const dayLettersMap = {
+            1:"א'", 2:"ב'", 3:"ג'", 4:"ד'", 5:"ה'", 6:"ו'", 7:"ז'", 8:"ח'", 9:"ט'", 10:"י'",
+            11:'י"א', 12:'י"ב', 13:'י"ג', 14:'י"ד', 15:'ט"ו', 16:'ט"ז', 17:'י"ז', 18:'י"ח',
+            19:'י"ט', 20:"כ'", 21:'כ"א', 22:'כ"ב', 23:'כ"ג', 24:'כ"ד', 25:'כ"ה',
+            26:'כ"ו', 27:'כ"ז', 28:'כ"ח', 29:'כ"ט', 30:"ל'"
+        };
+
+        // ── זמני שקיעה לפי חודש ──
+        function getSunsetForMonth() {
+            const m = new Date().getMonth() + 1;
+            const data = {
+                1:"16:58", 2:"17:26", 3:"17:49", 4:"19:12", 5:"19:36", 6:"19:52",
+                7:"19:51", 8:"19:27", 9:"18:46", 10:"18:04", 11:"16:42", 12:"16:41"
+            };
+            return data[m] || "19:52";
+        }
+
+        function offsetTime(timeStr, offset) {
+            const [h0, m0] = timeStr.split(':').map(Number);
+            let total = h0 * 60 + m0 + offset;
+            total = ((total % 1440) + 1440) % 1440;
+            return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+        }
+
+        function updatePreviews() {
+            const sunset = getSunsetForMonth();
+            const mOff = parseInt(document.getElementById('minchaOffset').value);
+            const aOff = parseInt(document.getElementById('arvitOffset').value);
+            const mMode = document.getElementById('minchaMode').value;
+            const aMode = document.getElementById('arvitMode').value;
+            if (mMode === 'auto' && !isNaN(mOff)) {
+                const label = mOff < 0 ? `${Math.abs(mOff)} דק' לפני שקיעה` : `${mOff} דק' אחרי שקיעה`;
+                document.getElementById('minchaPreview').textContent = `⏰ ${offsetTime(sunset, mOff)} (${label})`;
+            }
+            if (aMode === 'auto' && !isNaN(aOff)) {
+                const label = aOff < 0 ? `${Math.abs(aOff)} דק' לפני שקיעה` : `${aOff} דק' אחרי שקיעה`;
+                document.getElementById('arvitPreview').textContent = `⏰ ${offsetTime(sunset, aOff)} (${label})`;
+            }
+        }
+
+        function toggleInputs() {
+            const m = document.getElementById('minchaMode').value;
+            document.getElementById('minchaManualInput').classList.toggle('hidden', m === 'auto');
+            document.getElementById('minchaAutoInput').classList.toggle('hidden', m === 'manual');
+            const a = document.getElementById('arvitMode').value;
+            document.getElementById('arvitManualInput').classList.toggle('hidden', a === 'auto');
+            document.getElementById('arvitAutoInput').classList.toggle('hidden', a === 'manual');
+            updatePreviews();
+        }
+
+        function addDeceased() {
+            const name = document.getElementById('decName').value.trim();
+            const dayNum = parseInt(document.getElementById('decDayLetter').value);
+            const month = document.getElementById('decMonth').value;
+            const year = document.getElementById('decYear').value.trim() || "";
+            if (!name) { alert('נא להקליד שם נפטר'); return; }
+            deceasedArray.push({ name, day: dayNum, month, year });
+            document.getElementById('decName').value = '';
+            document.getElementById('decYear').value = '';
+            renderDeceasedList();
+        }
+
+        function removeDeceased(index) {
+            deceasedArray.splice(index, 1);
+            renderDeceasedList();
+        }
+
+        function editDeceased(index) {
+            const item = deceasedArray[index];
+            // מלא את שדות הטופס עם הנתונים הקיימים
+            document.getElementById('decName').value = item.name;
+            document.getElementById('decDayLetter').value = item.day;
+            document.getElementById('decMonth').value = item.month;
+            document.getElementById('decYear').value = item.year || '';
+            // מחק מהרשימה (יתווסף מחדש בלחיצה על "הוסף")
+            deceasedArray.splice(index, 1);
+            renderDeceasedList();
+            // גלול לשדה השם
+            document.getElementById('decName').focus();
+            document.getElementById('decName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function renderDeceasedList() {
+            const container = document.getElementById('deceasedListContainer');
+            container.innerHTML = '';
+            if (deceasedArray.length === 0) {
+                container.innerHTML = '<div style="color:#6b7280;font-size:0.9rem;margin-top:8px;text-align:center;">אין נפטרים ברשימה</div>';
+                return;
+            }
+            deceasedArray.forEach((item, idx) => {
+                const dayText = dayLettersMap[item.day] || item.day;
+                const yearText = item.year ? ` ${item.year}` : "";
+                container.innerHTML += `<div class="deceased-item">
+                    <span><strong>${item.name}</strong> — ${dayText} ב${item.month}${yearText}</span>
+                    <div style="display:flex;gap:6px;">
+                        <button type="button" class="btn-edit" onclick="editDeceased(${idx})">✏️ ערוך</button>
+                        <button type="button" class="btn-del" onclick="removeDeceased(${idx})">מחק</button>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function calibrateParasha() {
+            const idx = parseInt(document.getElementById('parashaSelect').value);
+            // שמור עוגן: תאריך שבת הקרובה + אינדקס הפרשה
+            const today = new Date();
+            const sat = new Date(today);
+            sat.setDate(today.getDate() + ((6 - today.getDay() + 7) % 7));
+            sat.setHours(0,0,0,0);
+            const anchor = { date: sat.toISOString(), idx };
+            localStorage.setItem('parasha_anchor', JSON.stringify(anchor));
+            // עדכן config גם כן
+            saveSettings();
+            const el = document.getElementById('parashaSuccess');
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
+
+        function saveSettings() {
+            const config = {
+                pageInterval: document.getElementById('pageInterval').value,
+                announcement: document.getElementById('announcementText').value,
+                shacharitTime: document.getElementById('shacharitTime').value,
+                minchaMode: document.getElementById('minchaMode').value,
+                minchaTime: document.getElementById('minchaTime').value,
+                minchaOffset: document.getElementById('minchaOffset').value,
+                arvitMode: document.getElementById('arvitMode').value,
+                arvitTime: document.getElementById('arvitTime').value,
+                arvitOffset: document.getElementById('arvitOffset').value,
+                shabbatMinchaErev: document.getElementById('shabbatMinchaErev').value,
+                shabbatShacharit: document.getElementById('shabbatShacharit').value,
+                shabbatMincha: document.getElementById('shabbatMincha').value,
+                shabbatArvitMotzei: document.getElementById('shabbatArvitMotzei').value,
+                deceasedList: deceasedArray
+            };
+            // שמור מקומית
+            localStorage.setItem('synagogue_config', JSON.stringify(config));
+            // שמור ב-Firebase (יעדכן את הלוח בזמן אמת)
+            if (window._firestoreDb) {
+                const { doc, setDoc } = window._firestoreFns;
+                setDoc(doc(window._firestoreDb, "synagogue", "config"), config)
+                    .then(() => {
+                        const successEl = document.getElementById('saveSuccess');
+                        successEl.textContent = '✅ נשמר ועודכן הלוח בזמן אמת!';
+                        successEl.style.display = 'block';
+                        setTimeout(() => { successEl.style.display = 'none'; successEl.textContent = '✅ הנתונים נשמרו בהצלחה!'; }, 3000);
+                    })
+                    .catch(() => {
+                        const successEl = document.getElementById('saveSuccess');
+                        successEl.textContent = '⚠️ נשמר מקומית בלבד (בדוק חיבור אינטרנט)';
+                        successEl.style.display = 'block';
+                        setTimeout(() => { successEl.style.display = 'none'; }, 3000);
+                    });
+            } else {
+                const successEl = document.getElementById('saveSuccess');
+                successEl.style.display = 'block';
+                setTimeout(() => { successEl.style.display = 'none'; }, 3000);
+            }
+            return config;
+        }
+
+        function exportJSON() {
+            // שמור תחילה כדי לכלול שינויים אחרונים
+            const config = saveSettings();
+            const json = JSON.stringify(config, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const today = new Date().toISOString().slice(0,10);
+            a.href = url;
+            a.download = `synagogue_backup_${today}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const config = JSON.parse(e.target.result);
+                    // טען לתוך localStorage
+                    localStorage.setItem('synagogue_config', JSON.stringify(config));
+                    // עדכן את הטפסים
+                    if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+                    document.getElementById('announcementText').value = config.announcement || '';
+                    document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
+                    document.getElementById('minchaMode').value = config.minchaMode || 'auto';
+                    document.getElementById('minchaTime').value = config.minchaTime || '18:30';
+                    document.getElementById('minchaOffset').value = config.minchaOffset !== undefined ? config.minchaOffset : '-20';
+                    document.getElementById('arvitMode').value = config.arvitMode || 'auto';
+                    document.getElementById('arvitTime').value = config.arvitTime || '19:30';
+                    document.getElementById('arvitOffset').value = config.arvitOffset !== undefined ? config.arvitOffset : '20';
+                    document.getElementById('shabbatMinchaErev').value = config.shabbatMinchaErev || '';
+                    document.getElementById('shabbatShacharit').value = config.shabbatShacharit || '08:00';
+                    document.getElementById('shabbatMincha').value = config.shabbatMincha || '18:00';
+                    document.getElementById('shabbatArvitMotzei').value = config.shabbatArvitMotzei || '';
+                    deceasedArray = config.deceasedList || [];
+                    renderDeceasedList();
+                    toggleInputs();
+                    // הצג הודעת הצלחה
+                    const el = document.getElementById('importSuccess');
+                    el.style.display = 'block';
+                    setTimeout(() => { el.style.display = 'none'; }, 3000);
+                } catch(err) {
+                    alert('שגיאה בקריאת הקובץ — ודא שזה קובץ גיבוי תקין');
+                }
+                // אפס את שדה הקובץ לאפשר ייבוא חוזר
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function exportCSV() {
+            saveSettings();
+            // כותרת + שורות
+            const BOM = '\uFEFF'; // נחוץ כדי ש-Excel יציג עברית נכון
+            let csv = BOM + 'שם,יום,חודש,שנה\n';
+            deceasedArray.forEach(item => {
+                // עוטף בגרשיים אם יש פסיק בתוך השדה
+                const wrap = v => (String(v).includes(',') ? `"${v}"` : String(v));
+                csv += `${wrap(item.name)},${wrap(item.day)},${wrap(item.month)},${wrap(item.year || '')}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const today = new Date().toISOString().slice(0,10);
+            a.href = url;
+            a.download = `niftarim_${today}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result.replace(/^\uFEFF/, ''); // הסר BOM אם קיים
+                    const lines = text.split(/\r?\n/).filter(l => l.trim());
+                    // דלג על שורת כותרת אם קיימת
+                    const startIdx = (lines[0].includes('שם') || lines[0].toLowerCase().includes('name')) ? 1 : 0;
+                    const imported = [];
+                    for (let i = startIdx; i < lines.length; i++) {
+                        // פרסינג פשוט — מחזיר מירכאות
+                        const cols = lines[i].match(/(".*?"|[^,]+)(?=,|$)/g) || [];
+                        const clean = cols.map(c => c.replace(/^"|"$/g, '').trim());
+                        const [name, day, month, year] = clean;
+                        if (!name || !day || !month) continue;
+                        const dayNum = parseInt(day);
+                        if (isNaN(dayNum) || dayNum < 1 || dayNum > 30) continue;
+                        imported.push({ name, day: dayNum, month, year: year || '' });
+                    }
+                    if (imported.length === 0) { alert('לא נמצאו נפטרים בקובץ — בדוק את הפורמט'); return; }
+                    // מיזוג: הוסף רק חדשים (לפי שם)
+                    const existing = new Set(deceasedArray.map(d => d.name));
+                    const newItems = imported.filter(d => !existing.has(d.name));
+                    deceasedArray = [...deceasedArray, ...newItems];
+                    renderDeceasedList();
+                    saveSettings();
+                    const el = document.getElementById('importSuccess');
+                    el.textContent = `✅ יובאו ${imported.length} נפטרים (${newItems.length} חדשים)`;
+                    el.style.display = 'block';
+                    setTimeout(() => { el.style.display = 'none'; el.textContent = '✅ הנתונים יובאו בהצלחה!'; }, 4000);
+                } catch(err) {
+                    alert('שגיאה בקריאת קובץ CSV — ודא שהפורמט תקין');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        window.onload = function() {
+            try {
+                const stored = localStorage.getItem('synagogue_config');
+                if (stored) {
+                    const config = JSON.parse(stored);
+                    if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+                    document.getElementById('announcementText').value = config.announcement || '';
+                    document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
+                    document.getElementById('minchaMode').value = config.minchaMode || 'auto';
+                    document.getElementById('minchaTime').value = config.minchaTime || '18:30';
+                    document.getElementById('minchaOffset').value = config.minchaOffset !== undefined ? config.minchaOffset : '-20';
+                    document.getElementById('arvitMode').value = config.arvitMode || 'auto';
+                    document.getElementById('arvitTime').value = config.arvitTime || '19:30';
+                    document.getElementById('arvitOffset').value = config.arvitOffset !== undefined ? config.arvitOffset : '20';
+                    document.getElementById('shabbatMinchaErev').value = config.shabbatMinchaErev || '';
+                    document.getElementById('shabbatShacharit').value = config.shabbatShacharit || '08:00';
+                    document.getElementById('shabbatMincha').value = config.shabbatMincha || '18:00';
+                    document.getElementById('shabbatArvitMotzei').value = config.shabbatArvitMotzei || '';
+                    deceasedArray = config.deceasedList || [];
+                    renderDeceasedList();
+                }
+            } catch(e) { console.error('Load error:', e); }
+            toggleInputs();
+        };
+    </script>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZIxHuEyiCkzQVoZIa1fG5yZwoHA_y8zg",
+            authDomain: "ai-screen-77c8e.firebaseapp.com",
+            projectId: "ai-screen-77c8e",
+            storageBucket: "ai-screen-77c8e.firebasestorage.app",
+            messagingSenderId: "753205820340",
+            appId: "1:753205820340:web:1072073f4758b63b8990e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // שמור reference גלובלי לשימוש ב-saveSettings
+        window._firestoreDb = db;
+        window._firestoreFns = { doc, setDoc };
+
+        // טען מ-Firebase בפתיחה (מעדכן אם יש גרסה חדשה יותר בענן)
+        try {
+            const docSnap = await getDoc(doc(db, "synagogue", "config"));
+            if (docSnap.exists()) {
+                const config = docSnap.data();
+                localStorage.setItem('synagogue_config', JSON.stringify(config));
+                // עדכן את הטפסים
+                if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+                document.getElementById('announcementText').value = config.announcement || '';
+                document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
+                document.getElementById('minchaMode').value = config.minchaMode || 'auto';
+                document.getElementById('minchaTime').value = config.minchaTime || '18:30';
+                document.getElementById('minchaOffset').value = config.minchaOffset !== undefined ? config.minchaOffset : '-20';
+                document.getElementById('arvitMode').value = config.arvitMode || 'auto';
+                document.getElementById('arvitTime').value = config.arvitTime || '19:30';
+                document.getElementById('arvitOffset').value = config.arvitOffset !== undefined ? config.arvitOffset : '20';
+                document.getElementById('shabbatMinchaErev').value = config.shabbatMinchaErev || '';
+                document.getElementById('shabbatShacharit').value = config.shabbatShacharit || '08:00';
+                document.getElementById('shabbatMincha').value = config.shabbatMincha || '18:00';
+                document.getElementById('shabbatArvitMotzei').value = config.shabbatArvitMotzei || '';
+                deceasedArray = config.deceasedList || [];
+                renderDeceasedList();
+                toggleInputs();
+
+                // עדכן כרזה
+                const banner = document.getElementById('autoLoadBanner');
+                const count = deceasedArray.length;
+                if (count > 0) {
+                    banner.className = 'auto-load-banner';
+                    banner.innerHTML = `☁️ נטען מהענן בהצלחה! <span class="count">${count} נפטרים</span>`;
+                }
+            }
+        } catch(e) {
+            console.log('Firebase load error:', e);
+        }
+    </script>
+</body>
+</html>
