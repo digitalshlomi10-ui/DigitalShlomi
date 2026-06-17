@@ -197,6 +197,21 @@
             <input type="number" id="pageInterval" value="10" min="3" max="120">
         </div>
 
+        <!-- כותרת בית הכנסת -->
+        <div class="section">
+            <h2>🏛️ כותרת בית הכנסת</h2>
+            <label>שם בית הכנסת (מוצג בראש הלוח):</label>
+            <input type="text" id="synagogueName" value='בית הכנסת "שערי שלום ליעקב"' placeholder='שם בית הכנסת'>
+            <label>צבע הכותרת:</label>
+            <div style="display:flex;align-items:center;gap:14px;margin-top:6px;">
+                <input type="color" id="titleColor" value="#f1f5f9" style="width:60px;height:44px;padding:2px;cursor:pointer;border-radius:8px;border:1.5px solid #b3d1ff;">
+                <span id="titleColorPreview" style="font-size:1.1rem;font-weight:700;color:#004d77;">תצוגה מקדימה</span>
+            </div>
+            <div style="margin-top:10px;padding:12px 20px;border-radius:12px;background:linear-gradient(135deg,#0a3d5c,#0d5a85);text-align:center;">
+                <span id="titleLivePreview" style="font-size:1.6rem;font-weight:bold;color:#f1f5f9;text-shadow:0 0 10px rgba(255,255,255,0.5);">בית הכנסת "שערי שלום ליעקב"</span>
+            </div>
+        </div>
+
         <!-- שורת הודעות -->
         <div class="section">
             <h2>שורת הודעות רצות</h2>
@@ -383,6 +398,21 @@
     </form>
 
     <script>
+        // ── Live preview לכותרת ──
+        function updateTitlePreview() {
+            const name = document.getElementById('synagogueName').value;
+            const color = document.getElementById('titleColor').value;
+            document.getElementById('titleLivePreview').textContent = name || 'שם בית הכנסת';
+            document.getElementById('titleLivePreview').style.color = color;
+            document.getElementById('titleColorPreview').style.color = color;
+            document.getElementById('titleColorPreview').textContent = color;
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('synagogueName').addEventListener('input', updateTitlePreview);
+            document.getElementById('titleColor').addEventListener('input', updateTitlePreview);
+            updateTitlePreview();
+        });
+
         let deceasedArray = [];
 
         const dayLettersMap = {
@@ -506,6 +536,8 @@
         function saveSettings() {
             const config = {
                 pageInterval: document.getElementById('pageInterval').value,
+                synagogueName: document.getElementById('synagogueName').value,
+                titleColor: document.getElementById('titleColor').value,
                 announcement: document.getElementById('announcementText').value,
                 shacharitTime: document.getElementById('shacharitTime').value,
                 minchaMode: document.getElementById('minchaMode').value,
@@ -571,6 +603,8 @@
                     localStorage.setItem('synagogue_config', JSON.stringify(config));
                     // עדכן את הטפסים
                     if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+                    if (config.synagogueName) document.getElementById('synagogueName').value = config.synagogueName;
+                    if (config.titleColor) document.getElementById('titleColor').value = config.titleColor;
                     document.getElementById('announcementText').value = config.announcement || '';
                     document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
                     document.getElementById('minchaMode').value = config.minchaMode || 'auto';
@@ -586,7 +620,7 @@
                     deceasedArray = config.deceasedList || [];
                     renderDeceasedList();
                     toggleInputs();
-                    // הצג הודעת הצלחה
+                    updateTitlePreview();
                     const el = document.getElementById('importSuccess');
                     el.style.display = 'block';
                     setTimeout(() => { el.style.display = 'none'; }, 3000);
@@ -665,6 +699,8 @@
                 if (stored) {
                     const config = JSON.parse(stored);
                     if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+                    if (config.synagogueName) document.getElementById('synagogueName').value = config.synagogueName;
+                    if (config.titleColor) document.getElementById('titleColor').value = config.titleColor;
                     document.getElementById('announcementText').value = config.announcement || '';
                     document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
                     document.getElementById('minchaMode').value = config.minchaMode || 'auto';
@@ -682,6 +718,7 @@
                 }
             } catch(e) { console.error('Load error:', e); }
             toggleInputs();
+            updateTitlePreview();
         };
     </script>
 
@@ -714,6 +751,8 @@
                 localStorage.setItem('synagogue_config', JSON.stringify(config));
                 // עדכן את הטפסים
                 if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+                if (config.synagogueName) document.getElementById('synagogueName').value = config.synagogueName;
+                if (config.titleColor) document.getElementById('titleColor').value = config.titleColor;
                 document.getElementById('announcementText').value = config.announcement || '';
                 document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
                 document.getElementById('minchaMode').value = config.minchaMode || 'auto';
@@ -729,6 +768,7 @@
                 deceasedArray = config.deceasedList || [];
                 renderDeceasedList();
                 toggleInputs();
+                updateTitlePreview();
 
                 // עדכן כרזה
                 const banner = document.getElementById('autoLoadBanner');
