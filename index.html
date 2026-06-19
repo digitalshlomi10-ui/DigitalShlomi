@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header><div style="text-align:center;"><h1 id="synagogue-title" style="display:inline-block;background:rgba(255,255,255,0.85);backdrop-filter:blur(5px);border-radius:25px;border:1px solid rgba(179,209,255,0.5);padding:8px 40px;font-size:3rem;color:#004d77;text-shadow:none;filter:none;">בית הכנסת "שערי שלום ליעקב"</h1></div></header>
+    <header><h1 id="synagogue-title">בית הכנסת "שערי שלום ליעקב"</h1></header>
     <div class="main-content">
         <!-- דף 1: זמני תפילות חול -->
         <div class="page active" id="page-weekdays">
@@ -326,6 +326,8 @@
         // ───── חישוב ראשי ─────
         function calculateAndDisplay() {
             globalSun = getPreciseOfflineSunTimes();
+            document.getElementById('sun-rise').textContent = globalSun.r;
+            document.getElementById('sun-set').textContent = globalSun.s;
 
             const defaultConfig = {
                 pageInterval: '10',
@@ -351,18 +353,6 @@
                 const stored = localStorage.getItem('synagogue_config');
                 if (stored) config = Object.assign({}, defaultConfig, JSON.parse(stored));
             } catch(e) {}
-
-            // ── עקיפה ידנית של זריחה/שקיעה ──
-            if (config.sunriseManual) globalSun.r = config.sunriseManual;
-            if (config.sunsetManual) {
-                globalSun.s = config.sunsetManual;
-                // חשב מחדש כניסת/יציאת שבת לפי השקיעה הידנית
-                globalSun.c = offsetTime(config.sunsetManual, -31);
-                globalSun.e = offsetTime(config.sunsetManual, 44);
-            }
-
-            document.getElementById('sun-rise').textContent = globalSun.r;
-            document.getElementById('sun-set').textContent = globalSun.s;
 
             startSlideshow(parseInt(config.pageInterval) || 10);
 
@@ -400,12 +390,20 @@
             amBox.textContent = config.shabbatArvitMotzei;
             amBox.className = config.shabbatArvitMotzei.length > 5 ? "prayer-time text-mode" : "prayer-time";
 
-            const parasha = config.parashaManual || getParasha();
+            const parasha = getParasha();
             console.log('פרשת השבוע:', parasha);
             document.getElementById('display-parasha').textContent = 'פרשת השבוע: ' + parasha;
             document.getElementById('shabbat-start').textContent = globalSun.c;
             document.getElementById('shabbat-end').textContent = globalSun.e;
 
+            // ── CSS variables לסגנון כרטיסי נפטרים מה-config ──
+            const root = document.documentElement;
+            root.style.setProperty("--card-bg",           config.cardBg          || "rgba(0,0,0,0.18)");
+            root.style.setProperty("--card-text-color",   config.cardTextColor   || "#ffffff");
+            root.style.setProperty("--card-border-color", config.cardBorderColor || "rgba(255,255,255,0.45)");
+            root.style.setProperty("--card-border-width", (config.cardBorderWidth != null ? config.cardBorderWidth : "2") + "px");
+            root.style.setProperty("--card-font-size",    (config.cardFontSize   || "1.2") + "rem");
+            if (config.cardFontFamily) root.style.setProperty("--card-font-family", config.cardFontFamily);
             loadMemorialCards(config);
 
             // ── תאריך עברי ──
