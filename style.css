@@ -1,0 +1,322 @@
+/* ══════════════════════════════════════════════════════
+   CSS VARIABLES — מוגדרות דינמית מ-config ב-JavaScript:
+   
+   document.documentElement.style.setProperty('--title-bg', `rgba(R,G,B,opacity)`);
+   document.documentElement.style.setProperty('--title-color', '#f1f5f9');
+   document.documentElement.style.setProperty('--bg-weekdays', `url('${config.bgWeekdays || "bgindex.jpg"}')`);
+   document.documentElement.style.setProperty('--bg-shabbat',  `url('${config.bgShabbat  || "bgshabbat.jpg"}')`);
+   document.documentElement.style.setProperty('--bg-times',    `url('${config.bgTimes    || "bgshabbattimes.jpg"}')`);
+══════════════════════════════════════════════════════ */
+
+body {
+    background-image: url('bgindex.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: #006699;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 25px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+#page-weekdays.active { background-image: var(--bg-weekdays, url('bgindex.jpg')) !important; }
+#page-shabbat.active { background-image: var(--bg-shabbat, url('bgshabbat.jpg')) !important; }
+#page-times.active { background-image: var(--bg-times, url('bgshabbattimes.jpg')) !important; }
+#page-memorial.active,
+.page-memorial-extra.active {
+    background-image: var(--bg-memorial, none) !important;
+    background-color: var(--memorial-bg-color, #0a0a0a) !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+#page-weekdays.active, #page-shabbat.active, #page-times.active,
+#page-memorial.active, .page-memorial-extra.active {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    padding: 100px 25px 110px 25px;
+    box-sizing: border-box; background-size: cover; background-position: center;
+    background-repeat: no-repeat; display: flex !important; flex-direction: column;
+    justify-content: center; z-index: 100;
+}
+.page { display: none; width: 100%; animation: fadeInEffect 0.8s ease-in-out; }
+.page.active { display: flex !important; flex-direction: column; }
+
+/* כיוון אנכי לכל דף בנפרד */
+#page-weekdays.active { padding-top: 60px !important; padding-bottom: 130px !important; }
+#page-shabbat.active { padding-top: 60px !important; padding-bottom: 130px !important; }
+#page-times.active { padding-top: 130px !important; padding-bottom: 80px !important; }
+
+/* בדף נפטרים — כותרת "נר תמיד" מוצגת */
+#page-memorial .page-title,
+.page-memorial-extra .page-title {
+    display: block;
+    font-size: 1.8rem;
+    margin: 0 auto 28px auto;
+    padding: 7px 32px;
+    letter-spacing: 1px;
+    color: #003d5c;
+    background: rgba(255,255,255,0.9);
+}
+#page-memorial.active, .page-memorial-extra.active {
+    justify-content: flex-start;
+    padding-top: 140px;
+    padding-bottom: 120px;
+}
+
+/* גריד נפטרים תופס את כל הגובה הפנוי */
+#page-memorial.active .memorial-grid,
+.page-memorial-extra.active .memorial-grid,
+#page-memorial.active .memorial-grid-4,
+.page-memorial-extra.active .memorial-grid-4 {
+    flex: 1;
+    height: 100%;
+}
+
+header { 
+    text-align: center; padding: 6px 15px 0; background: none; border: none; position: relative; z-index: 10; flex-shrink: 0;
+}
+h1 {
+    font-size: 4.2rem; color: var(--title-color, #f1f5f9); margin: 0; font-weight: bold; letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.6), 2px 2px 5px rgba(0, 40, 80, 0.8);
+    filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.3));
+    background: var(--title-bg, rgba(0, 60, 100, 0.55));
+    backdrop-filter: blur(6px);
+    display: inline-block;
+    padding: 4px 30px;
+    border-radius: 16px;
+}
+.main-content {
+    text-align: center; display: flex; flex-direction: column; gap: 5px; flex-grow: 1; justify-content: center; width: 100%; position: relative; z-index: 5;
+}
+@keyframes fadeInEffect { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+.page-title, .parasha-title {
+    text-align: center; font-size: 2.4rem; color: #004d77; margin: 0 auto 15px auto; font-weight: bold;
+    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(5px); display: inline-block; padding: 8px 40px; border-radius: 25px; border: 1px solid rgba(179, 209, 255, 0.5);
+}
+.parasha-title { font-size: 3.5rem; }
+
+.prayer-container-3 { display: flex; justify-content: center; gap: 60px; width: 100%; align-items: center; }
+.prayer-container-3 .card-wrapper { flex: none; width: 100%; max-width: 350px; }
+.prayer-container-3 .prayer-card { padding: 35px 15px; }
+.prayer-container-3 .prayer-time { font-size: 4.8rem; font-weight: 900; }
+
+#page-times .prayer-container-3 { gap: 60px; }
+#page-times .card-wrapper { max-width: 350px; }
+#page-times .prayer-card { padding: 35px 15px !important; }
+#page-times .prayer-time { font-size: 4.5rem !important; }
+
+.prayer-container-4 { display: flex !important; justify-content: center !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; align-items: flex-start !important; }
+.prayer-container-4 .card-wrapper { flex: none !important; width: 100% !important; max-width: 280px !important; display: flex !important; flex-direction: column !important; align-items: center !important; }
+.prayer-container-4 .prayer-card { padding: 15px !important; height: 130px !important; max-height: 130px !important; min-height: 130px !important; display: flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important; width: 100% !important; }
+.prayer-container-4 .prayer-time { font-size: 4.2rem !important; font-weight: 900 !important; color: #0077b6 !important; }
+
+/* 🌟 הגדלה והבלטה מבוקרת של המלל החופשי לקריאות מושלמת מהמרחק */
+.shabbat-text-fix, .prayer-container-4 .prayer-time.text-mode { 
+    font-size: 2.5rem !important; /* הגדלה משמעותית של הגופן */
+    line-height: 2.5rem !important; /* שמירה על מרווח אנכי תואם מול הגודל החדש */
+    font-weight: 900 !important; /* הבלטה מקסימלית של האותיות */
+    color: #005b8e !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.memorial-grid,
+.memorial-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(var(--memorial-cols, 4), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--memorial-rows, 4), minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    flex: 1;
+    align-content: stretch;
+    justify-content: center;
+    box-sizing: border-box;
+}
+.memorial-page-indicator {
+    position: fixed;
+    top: 110px;
+    left: 30px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(6px);
+    border: 2px solid #b3d1ff;
+    border-radius: 12px;
+    padding: 6px 18px;
+    color: #005b8e;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 12px rgba(0,60,90,0.12);
+    z-index: 300;
+}
+
+/* שורת יארצייט — שורה נפרדת בולטת מעל הגריד הרגיל */
+.yahrzeit-row {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 14px;
+    width: 100%;
+}
+.yahrzeit-card {
+    min-width: 220px;
+    max-width: 320px;
+    min-height: 80px;        /* גובה קבוע — לא מושפע מגודל גופן הקוביות */
+    flex: 0 0 auto;
+    border: 2px solid #d4af37 !important;
+    background: rgba(255, 252, 230, 0.97) !important;
+    box-shadow: 0 0 22px rgba(212,175,55,0.5) !important;
+    padding: 8px 44px 8px 14px !important;
+}
+
+/* נר קטן יותר בכרטיס אזכרה */
+.yahrzeit-card::before {
+    width: 8px !important;
+    height: 24px !important;
+    right: 6px !important;
+    bottom: 8px !important;
+}
+.yahrzeit-card::after {
+    width: 5px !important;
+    height: 10px !important;
+    right: 8px !important;
+    bottom: 32px !important;
+}
+.yahrzeit-label {
+    font-size: 0.75rem;
+    color: #a07820;
+    font-weight: 700;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+}
+
+/* גופן קבוע בכרטיס אזכרה — לא מושפע מהגדרות גופן הקוביות הרגילות */
+.yahrzeit-card .m-name {
+    font-size: 1.25rem !important;
+    line-height: 1.2 !important;
+    color: #7a5c10 !important;
+    text-shadow: none !important;
+}
+.yahrzeit-card .m-date {
+    font-size: 0.9rem !important;
+    color: #9a7520 !important;
+    text-shadow: none !important;
+}
+.yahrzeit-card .m-suffix {
+    font-size: 0.75rem !important;
+    color: #b89030 !important;
+    margin-top: 1px !important;
+    text-shadow: none !important;
+}
+.memorial-card {
+    /* ברירת מחדל — שקוף, ניתן לעקיפה מה-config */
+    background: var(--card-bg, rgba(0, 0, 0, 0.18));
+    backdrop-filter: blur(6px);
+    border: var(--card-border-width, 2px) solid var(--card-border-color, rgba(255,255,255,0.45));
+    border-radius: 12px;
+    padding: 6px 44px 6px 10px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    box-sizing: border-box;
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;      /* גופן גדול לא יגדיל את הקוביה */
+    min-height: 0;         /* מאפשר ל-grid לשלוט בגובה */
+    position: relative;
+    container-type: size;  /* מאפשר font-size יחסי לגובה הקוביה */
+}
+
+/* נר זיכרון CSS — גוף נר רחב ובולט */
+.memorial-card::before {
+    content: '';
+    position: absolute;
+    right:  8px;
+    bottom: 10px;
+    width: 11px;
+    height: 34px;
+    background: linear-gradient(to bottom, #fff8e7 0%, #f0d080 60%, #c8a040 100%);
+    border-radius: 3px 3px 1px 1px;
+    box-shadow: 0 0 6px rgba(255,200,60,0.4);
+}
+/* להבה — גדולה ובוהקת */
+.memorial-card::after {
+    content: '';
+    position: absolute;
+    right:  11px;
+    bottom: 44px;
+    width: 7px;
+    height: 14px;
+    background: radial-gradient(ellipse at 50% 85%, #fff176 0%, #ffcc00 35%, #ff8800 70%, transparent 100%);
+    border-radius: 50% 50% 30% 30%;
+    box-shadow: 0 0 8px 4px rgba(255,180,0,0.7), 0 0 16px 6px rgba(255,120,0,0.3);
+    animation: flicker 1.4s ease-in-out infinite alternate;
+}
+@keyframes flicker {
+    0%   { transform: scaleX(1)    scaleY(1)    rotate(-1deg); opacity: 1; }
+    40%  { transform: scaleX(0.8)  scaleY(1.15) rotate(1.5deg); opacity: 0.88; }
+    100% { transform: scaleX(1.15) scaleY(0.9)  rotate(-2deg); opacity: 1; }
+}
+.memorial-card .candle-icon { display: none; }
+
+/* כתב — לבן חזק ברירת מחדל */
+.memorial-card .m-name {
+    font-size: var(--card-font-size, 1.6rem);
+    font-family: var(--card-font-family, inherit);
+    color: var(--card-text-color, #ffffff);
+    font-weight: 800;
+    margin-bottom: 3px;
+    line-height: 1.2;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+}
+.memorial-card .m-date {
+    font-size: calc(var(--card-font-size, 1.6rem) * 0.75);
+    font-family: var(--card-font-family, inherit);
+    color: var(--card-text-color, #e8f4ff);
+    font-weight: 600;
+    line-height: 1.2;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.memorial-card .m-suffix {
+    font-size: calc(var(--card-font-size, 1.6rem) * 0.6);
+    color: rgba(255,255,255,0.75);
+    margin-top: 2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* אזכרה השבוע — בולט עם רקע */
+.memorial-card.highlight {
+    background: rgba(255, 248, 210, 0.97) !important;
+    border: var(--card-border-width, 2px) solid #d4af37 !important;
+    box-shadow: 0 0 22px rgba(212,175,55,0.7) !important;
+}
+.memorial-card.highlight .m-name { color: #7a5c10 !important; text-shadow: none !important; }
+.memorial-card.highlight .m-date { color: #9a7520 !important; font-weight: bold; text-shadow: none !important; }
+.memorial-card.highlight .m-suffix { color: #b89030 !important; text-shadow: none !important; }
+
+.prayer-name { font-size: 1.8rem; color: #004d77; font-weight: bold; margin: 0 auto 12px auto; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; padding: 6px 20px; border-radius: 12px; border: 1px solid rgba(179, 209, 255, 0.4); min-height: 50px; width: max-content; max-width: 100%; box-sizing: border-box; white-space: nowrap; }
+.prayer-card { background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(8px); border: 2px solid #b3d1ff; border-radius: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,60,90,0.12); width: 100%; box-sizing: border-box; }
+.bottom-area { display: flex; flex-direction: column; gap: 0; width: 100%; position: fixed; bottom: 0; left: 0; right: 0; padding: 0; box-sizing: border-box; z-index: 200; }
+.marquee-container { background: rgba(230, 242, 255, 0.95); backdrop-filter: blur(5px); border-radius: 0; padding: 7px 25px; border: none; border-top: 1px solid #b3d1ff; overflow: hidden; white-space: nowrap; }
+.marquee-text { display: inline-block; font-size: 1.4rem; font-weight: bold; color: #005b8e; padding-right: 100%; animation: marqueeEffect 20s linear infinite; }
+@keyframes marqueeEffect { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
+footer { border-top: 2px solid #b3d1ff; background: rgba(244, 246, 249, 0.97); backdrop-filter: blur(5px); padding: 8px 25px; border-radius: 0; display: flex; justify-content: space-between; align-items: center; font-size: 1.5rem; color: #005b8e; }
+.footer-right { font-weight: bold; font-size: 1.8rem; color: #004d77; }
+.footer-center { display: flex; gap: 40px; font-weight: bold; font-size: 1.7rem; }
+.footer-center strong { color: #0077b6; }
+.footer-left { font-size: 2.2rem; font-weight: bold; color: #005b8e; }
