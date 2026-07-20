@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>ניהול לוח — שערי שלום</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#003c64">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: linear-gradient(160deg, #e8f4fd 0%, #f0f7ff 100%);
+            color: #004d77;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            font-size: 16px;
+        }
+        .top-bar {
+            background: linear-gradient(135deg, #004d77, #0077b6);
+            color: white;
+            padding: 16px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,60,100,0.3);
+        }
+        .top-bar h1 { margin: 0; font-size: 1.3rem; letter-spacing: 0.5px; }
+        .top-bar .subtitle { font-size: 0.85rem; opacity: 0.85; margin-top: 3px; }
+
+        .status-banner {
+            margin: 14px 14px 0;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-banner.ok { background: #d1fae5; border: 2px solid #34d399; color: #065f46; }
+        .status-banner.warn { background: #fef3c7; border: 2px solid #f59e0b; color: #92400e; }
+        .status-banner .count-pill { background: #059669; color: white; border-radius: 20px; padding: 2px 10px; font-size: 0.85rem; }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #dbeeff;
+            position: sticky;
+            top: 65px;
+            z-index: 99;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab.active { color: #0077b6; border-bottom-color: #0077b6; background: #f0f8ff; }
+        .tab-icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+
+        .content { padding: 14px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+            border: 1px solid #cce3f5;
+            box-shadow: 0 2px 10px rgba(0,60,100,0.06);
+        }
+        .card h2 { margin: 0 0 14px 0; font-size: 1.05rem; color: #005b8e; border-bottom: 1px solid #dbeeff; padding-bottom: 10px; }
+
+        label { display: block; margin: 0 0 5px 0; font-size: 0.88rem; color: #005b8e; font-weight: 600; }
+        input, select, textarea {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 10px;
+            border: 1.5px solid #b3d1ff;
+            background: #f8fafd;
+            color: #003d5c;
+            font-size: 1rem;
+            font-family: inherit;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0077b6;
+            background: #fff;
+        }
+        textarea { min-height: 90px; resize: vertical; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: opacity 0.2s, transform 0.1s;
+            margin-bottom: 10px;
+            font-family: inherit;
+            letter-spacing: 0.3px;
+        }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-primary { background: linear-gradient(135deg, #0077b6, #005b8e); color: white; }
+        .btn-green { background: linear-gradient(135deg, #28a745, #1e8035); color: white; }
+        .btn-gray { background: linear-gradient(135deg, #6c757d, #495057); color: white; }
+        .btn-red { background: #dc3545; color: white; }
+        .btn-amber { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-sm {
+            display: inline-block;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .time-preview-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+            font-size: 0.9rem;
+            padding: 8px 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .deceased-item {
+            background: #f0f7ff;
+            border: 1px solid #cce3f5;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .deceased-item .name { font-weight: bold; font-size: 0.95rem; color: #004d77; }
+        .deceased-item .date { font-size: 0.82rem; color: #5a7a8a; margin-top: 2px; }
+        .deceased-item .actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #065f46;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            z-index: 999;
+            white-space: nowrap;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .mode-select { margin-bottom: 8px; }
+
+        .import-label {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+
+        .empty-list { text-align: center; color: #9ca3af; padding: 20px; font-size: 0.9rem; }
+
+        .parasha-hint { font-size: 0.85rem; color: #5a7a8a; margin-bottom: 12px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>⚙️ ניהול לוח בית הכנסת</h1>
+    <div class="subtitle">שערי שלום ליעקב</div>
+</div>
+
+<div id="statusBanner" class="status-banner warn">⏳ טוען...</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('tab-niftarim')">
+        <span class="tab-icon">🕯️</span>נפטרים
+    </div>
+    <div class="tab" onclick="showTab('tab-prayers')">
+        <span class="tab-icon">🕍</span>תפילות
+    </div>
+    <div class="tab" onclick="showTab('tab-shabbat')">
+        <span class="tab-icon">✡️</span>שבת
+    </div>
+    <div class="tab" onclick="showTab('tab-settings')">
+        <span class="tab-icon">📢</span>הגדרות
+    </div>
+    <div class="tab" onclick="showTab('tab-title')">
+        <span class="tab-icon">🏛️</span>כותרת
+    </div>
+    <div class="tab" onclick="showTab('tab-bg')">
+        <span class="tab-icon">🖼️</span>רקע
+    </div>
+    <div class="tab" onclick="showTab('tab-backup')">
+        <span class="tab-icon">💾</span>גיבוי
+    </div>
+</div>
+
+<div class="content">
+
+    <!-- נפטרים -->
+    <div class="panel active" id="tab-niftarim">
+
+        <!-- עיצוב קוביות -->
+        <div class="card" style="border-color:#a78bfa;">
+            <h2>🎨 עיצוב קוביות נפטרים</h2>
+            <div class="section-row">
+                <div>
+                    <label>🎨 צבע רקע:</label>
+                    <input type="color" id="cardBgColor" value="#001a2e" style="height:42px;width:100%;border-radius:8px;cursor:pointer;" oninput="this.dataset.raw=''; updateCardPreview()">
+                    <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+                        <button class="btn btn-gray" style="padding:4px 10px;font-size:0.78rem;margin:0;" onclick="setCardBg('rgba(0,0,0,0.18)')">שקוף</button>
+                        <button class="btn btn-gray" style="padding:4px 10px;font-size:0.78rem;margin:0;" onclick="setCardBg('rgba(0,26,46,0.9)')">כחול כהה</button>
+                        <button class="btn btn-gray" style="padding:4px 10px;font-size:0.78rem;margin:0;" onclick="setCardBg('rgba(20,8,8,0.85)')">כהה חם</button>
+                    </div>
+                </div>
+                <div>
+                    <label>✍️ צבע כתב:</label>
+                    <input type="color" id="cardTextColor" value="#ffffff" style="height:42px;width:100%;border-radius:8px;cursor:pointer;" oninput="updateCardPreview()">
+                </div>
+            </div>
+            <div class="section-row" style="margin-top:10px;">
+                <div>
+                    <label>🖼️ צבע מסגרת:</label>
+                    <input type="color" id="cardBorderColor" value="#7ab8e8" style="height:42px;width:100%;border-radius:8px;cursor:pointer;" oninput="updateCardPreview()">
+                </div>
+                <div>
+                    <label>📏 עובי מסגרת (px):</label>
+                    <input type="number" id="cardBorderWidth" value="2" min="0" max="8" oninput="updateCardPreview()">
+                </div>
+            </div>
+            <div style="margin-top:10px;">
+                <label>🔤 גודל כתב (rem):</label>
+                <input type="number" id="cardFontSize" value="1.2" min="0.7" max="2.5" step="0.05" oninput="updateCardPreview()">
+            </div>
+            <!-- גריד נפטרים -->
+            <div class="section-row" style="margin-top:10px;">
+                <div>
+                    <label>📐 עמודות בגריד:</label>
+                    <input type="number" id="gridCols" value="4" min="1" max="8" oninput="updateGridSummary()">
+                    <div style="font-size:0.78rem;color:#5a7a8a;margin-top:2px;">קוביות לרוחב</div>
+                </div>
+                <div>
+                    <label>📏 שורות בגריד:</label>
+                    <input type="number" id="gridRows" value="4" min="1" max="10" oninput="updateGridSummary()">
+                    <div style="font-size:0.78rem;color:#5a7a8a;margin-top:2px;">קוביות לגובה</div>
+                </div>
+            </div>
+            <div id="gridSummary" style="margin-top:8px;background:#e8f4fd;border-radius:8px;padding:8px 12px;font-size:0.88rem;color:#004d77;font-weight:600;">
+                גריד: 4×4 = 16 קוביות בדף
+            </div>
+            <!-- תצוגה מקדימה -->
+            <div style="margin-top:12px;background:#0a0a0a;border-radius:10px;padding:12px;display:flex;gap:10px;justify-content:center;">
+                <div id="previewCard1" style="border-radius:10px;padding:10px 12px 10px 36px;min-width:130px;position:relative;text-align:center;transition:all 0.2s;">
+                    <div id="previewName1" style="font-weight:800;line-height:1.3;font-size:1.1rem;">ישראל בן יעקב</div>
+                    <div id="previewDate1" style="font-size:0.85rem;font-weight:600;">כ"ג בכסלו</div>
+                    <div id="previewSuffix1" style="font-size:0.7rem;opacity:0.75;">ת.נ.צ.ב.ה.</div>
+                </div>
+                <div style="border-radius:10px;padding:10px 12px;min-width:120px;text-align:center;background:rgba(255,248,210,0.97);border:2px solid #d4af37;">
+                    <div style="font-size:0.7rem;color:#a07820;font-weight:700;">🕯️ אזכרה 🕯️</div>
+                    <div style="font-weight:800;color:#7a5c10;font-size:1rem;">שרה בת אברהם</div>
+                    <div style="font-size:0.8rem;color:#9a7520;font-weight:600;">ט"ו בשבט</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:12px;" onclick="saveAll()">💾 שמור עיצוב</button>
+        </div>
+
+        <div class="card">
+            <h2>➕ הוסף נפטר חדש</h2>
+            <label>שם הנפטר/ת:</label>
+            <input type="text" id="decName" placeholder='ישראל בן משה ז"ל'>
+            <div class="section-row">
+                <div>
+                    <label>יום עברי:</label>
+                    <select id="decDay">
+                        <option value="1">א'</option><option value="2">ב'</option><option value="3">ג'</option>
+                        <option value="4">ד'</option><option value="5">ה'</option><option value="6">ו'</option>
+                        <option value="7">ז'</option><option value="8">ח'</option><option value="9">ט'</option>
+                        <option value="10">י'</option><option value="11">י"א</option><option value="12">י"ב</option>
+                        <option value="13">י"ג</option><option value="14">י"ד</option><option value="15">ט"ו</option>
+                        <option value="16">ט"ז</option><option value="17">י"ז</option><option value="18">י"ח</option>
+                        <option value="19">י"ט</option><option value="20">כ'</option><option value="21">כ"א</option>
+                        <option value="22">כ"ב</option><option value="23">כ"ג</option><option value="24">כ"ד</option>
+                        <option value="25">כ"ה</option><option value="26">כ"ו</option><option value="27">כ"ז</option>
+                        <option value="28">כ"ח</option><option value="29">כ"ט</option><option value="30">ל'</option>
+                    </select>
+                </div>
+                <div>
+                    <label>חודש עברי:</label>
+                    <select id="decMonth">
+                        <option>תשרי</option><option>חשוון</option><option>כסלו</option><option>טבת</option>
+                        <option>שבט</option><option>אדר</option><option>אדר א</option><option>אדר ב</option>
+                        <option>ניסן</option><option>אייר</option><option>סיוון</option><option>תמוז</option>
+                        <option>אב</option><option>אלול</option>
+                    </select>
+                </div>
+            </div>
+            <label>שנת פטירה (אופציונלי):</label>
+            <input type="text" id="decYear" placeholder='תשפ"ה'>
+            <button class="btn btn-green" onclick="addDeceased()">+ הוסף לרשימה</button>
+        </div>
+
+        <div class="card">
+            <h2 id="listTitle">רשימת הנפטרים</h2>
+            <div id="deceasedListContainer">
+                <div class="empty-list">אין נפטרים ברשימה</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- תפילות חול -->
+    <div class="panel" id="tab-prayers">
+        <!-- זריחה/שקיעה ידני -->
+        <div class="card" style="border-color:#fcd34d;">
+            <h2>🌅 זריחה ושקיעה</h2>
+            <p style="font-size:0.85rem;color:#5a7a8a;margin:0 0 12px 0;">המערכת מחשבת שקיעה אוטומטית לפי חודש. ניתן לעקוף ידנית.</p>
+            <div class="section-row">
+                <div>
+                    <label>🌄 זריחה:</label>
+                    <input type="time" id="sunriseManual" oninput="updatePreviews()">
+                </div>
+                <div>
+                    <label>🌇 שקיעה:</label>
+                    <input type="time" id="sunsetManual" oninput="updatePreviews()">
+                </div>
+            </div>
+            <div id="sunTimesPreview" style="font-size:0.85rem;padding:8px 12px;border-radius:8px;background:#f0f7ff;border:1px solid #b3d1ff;color:#005b8e;font-weight:600;margin-bottom:10px;display:none;"></div>
+            <button class="btn btn-amber" onclick="saveManualSunTimes()">💾 שמור זמנים</button>
+            <button class="btn btn-gray" onclick="clearManualSunTimes()">🔄 חזור לאוטומטי</button>
+        </div>
+
+        <div class="card">
+            <h2>תפילות חול</h2>
+            <label>שחרית חול:</label>
+            <input type="time" id="shacharitTime" value="05:45">
+
+            <label>מנחה חול:</label>
+            <select id="minchaMode" class="mode-select" onchange="toggleInputs()">
+                <option value="auto">אוטומטי לפי שקיעה</option>
+                <option value="manual">שעה קבועה</option>
+            </select>
+            <div id="minchaAutoDiv">
+                <label>דקות לפני שקיעה (מספר שלילי):</label>
+                <input type="number" id="minchaOffset" value="-20" oninput="updatePreviews()">
+                <div class="time-preview-box" id="minchaPreview">מחושב...</div>
+            </div>
+            <div id="minchaManualDiv" style="display:none">
+                <label>שעה קבועה:</label>
+                <input type="time" id="minchaTime" value="18:30">
+            </div>
+
+            <label>ערבית חול:</label>
+            <select id="arvitMode" class="mode-select" onchange="toggleInputs()">
+                <option value="auto">אוטומטי לפי שקיעה</option>
+                <option value="manual">שעה קבועה</option>
+            </select>
+            <div id="arvitAutoDiv">
+                <label>דקות אחרי שקיעה:</label>
+                <input type="number" id="arvitOffset" value="20" oninput="updatePreviews()">
+                <div class="time-preview-box" id="arvitPreview">מחושב...</div>
+            </div>
+            <div id="arvitManualDiv" style="display:none">
+                <label>שעה קבועה:</label>
+                <input type="time" id="arvitTime" value="19:30">
+            </div>
+
+            <button class="btn btn-primary" onclick="saveAll()">💾 שמור</button>
+        </div>
+    </div>
+
+    <!-- שבת -->
+    <div class="panel" id="tab-shabbat">
+        <div class="card">
+            <h2>תפילות שבת קודש</h2>
+            <label>מנחה ערב שבת:</label>
+            <input type="text" id="shabbatMinchaErev" placeholder="15 דק' לאחר נרות">
+            <label>שחרית שבת:</label>
+            <input type="time" id="shabbatShacharit" value="08:00">
+            <label>מנחה שבת:</label>
+            <input type="time" id="shabbatMincha" value="18:00">
+            <label>ערבית מוצאי שבת:</label>
+            <input type="text" id="shabbatArvitMotzei" placeholder="20 דק' לאחר שקיעה">
+            <button class="btn btn-primary" onclick="saveAll()">💾 שמור</button>
+        </div>
+
+        <div class="card" style="border-color:#fcd34d;">
+            <h2>🕯️ כניסת/יציאת שבת — עקיפה ידנית</h2>
+            <p style="font-size:0.85rem;color:#5a7a8a;margin:0 0 12px 0;">המערכת מחשבת אוטומטית (31 דק' לפני שקיעה / 44 דק' אחרי). ניתן לעקוף לשבת הקרובה בלבד.</p>
+            <div class="section-row">
+                <div>
+                    <label>🕯️ כניסת שבת:</label>
+                    <input type="time" id="shabbatStartManual">
+                </div>
+                <div>
+                    <label>✨ יציאת שבת:</label>
+                    <input type="time" id="shabbatEndManual">
+                </div>
+            </div>
+            <div id="shabbatTimesPreview" style="font-size:0.85rem;padding:8px 12px;border-radius:8px;background:#f0f7ff;border:1px solid #b3d1ff;color:#005b8e;font-weight:600;margin-bottom:10px;display:none;"></div>
+            <button class="btn btn-amber" onclick="saveManualShabbatTimes()">💾 שמור זמנים</button>
+            <button class="btn btn-gray" onclick="clearManualShabbatTimes()">🔄 חזור לאוטומטי</button>
+        </div>
+
+        <div class="card">
+            <h2>📖 כיוון פרשת השבוע</h2>
+            <p class="parasha-hint">אם הפרשה שגויה — בחר פרשה נכונה ולחץ עדכן:</p>
+
+            <!-- הזנה ידנית -->
+            <div style="background:#fff8e8;border:1.5px solid #f59e0b;border-radius:12px;padding:14px;margin-bottom:14px;">
+                <label style="color:#92400e;font-weight:700;margin-bottom:8px;display:block;">✏️ הזנה ידנית של שם הפרשה:</label>
+                <input type="text" id="parashaManual" placeholder='למשל: קורח, פינחס, מטות-מסעי...'>
+                <div id="manualParashaStatus" style="font-size:0.85rem;color:#92400e;font-weight:600;margin-bottom:8px;display:none;"></div>
+                <button class="btn btn-amber" onclick="setManualParasha()">📌 קבע פרשה ידנית</button>
+                <button class="btn btn-gray" onclick="clearManualParasha()" style="margin-top:0;">🔄 בטל פרשה ידנית</button>
+            </div>
+
+            <label style="color:#5a7a8a;font-size:0.85rem;">כיוון אוטומטי (בחר ולחץ עדכן):</label>
+            <select id="parashaSelect">
+                <option value="0">בראשית</option><option value="1">נח</option>
+                <option value="2">לך לך</option><option value="3">וירא</option>
+                <option value="4">חיי שרה</option><option value="5">תולדות</option>
+                <option value="6">ויצא</option><option value="7">וישלח</option>
+                <option value="8">וישב</option><option value="9">מקץ</option>
+                <option value="10">ויגש</option><option value="11">ויחי</option>
+                <option value="12">שמות</option><option value="13">וארא</option>
+                <option value="14">בא</option><option value="15">בשלח</option>
+                <option value="16">יתרו</option><option value="17">משפטים</option>
+                <option value="18">תרומה</option><option value="19">תצוה</option>
+                <option value="20">כי תשא</option><option value="21">ויקהל-פקודי</option>
+                <option value="22">ויקרא</option><option value="23">צו</option>
+                <option value="24">שמיני</option><option value="25">תזריע-מצורע</option>
+                <option value="26">אחרי מות-קדושים</option><option value="27">אמור</option>
+                <option value="28">בהר-בחוקותי</option><option value="29">במדבר</option>
+                <option value="30">נשא</option><option value="31">בהעלותך</option>
+                <option value="32">שלח</option><option value="33">קורח</option>
+                <option value="34">חוקת</option><option value="35">בלק</option>
+                <option value="36">פנחס</option><option value="37">מטות-מסעי</option>
+                <option value="38">דברים</option><option value="39">ואתחנן</option>
+                <option value="40">עקב</option><option value="41">ראה</option>
+                <option value="42">שופטים</option><option value="43">כי תצא</option>
+                <option value="44">כי תבוא</option><option value="45">נצבים-וילך</option>
+                <option value="46">האזינו</option><option value="47">וזאת הברכה</option>
+            </select>
+            <button class="btn btn-amber" onclick="calibrateParasha()">🔄 עדכן פרשה</button>
+        </div>
+    </div>
+
+    <!-- הגדרות -->
+    <div class="panel" id="tab-settings">
+        <div class="card">
+            <h2>הגדרות תצוגה</h2>
+            <label>זמן כל דף (שניות):</label>
+            <input type="number" id="pageInterval" value="10" min="3" max="120">
+        </div>
+        <div class="card">
+            <h2>📢 הודעות רצות</h2>
+            <label>טקסט בתחתית המסך:</label>
+            <textarea id="announcementText" placeholder="הקלד כאן הודעות גבאי, הקדשות, אירועים..."></textarea>
+        </div>
+        <div class="card">
+            <h2>🎉 תג חג / ראש חודש / צום</h2>
+            <p style="font-size:0.85rem;color:#5a7a8a;margin:0 0 10px 0;">זיהוי אוטומטי של ר״ח, חגים, חוה״מ וצומות (כולל חנוכה ודחיית צומות משבת), ללא אינטרנט.</p>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:normal;cursor:pointer;">
+                <input type="checkbox" id="showHolidayBadge" checked style="width:auto;margin:0;" onchange="updateHolidayBadgeStatus()">
+                הצג תג אוטומטי בלוח
+                <span id="showHolidayBadgeStatus" style="margin-right:auto;font-weight:bold;font-size:0.9rem;"></span>
+            </label>
+        </div>
+        <button class="btn btn-primary" onclick="saveAll()">💾 שמור הכל</button>
+    </div>
+
+    <!-- כותרת בית הכנסת -->
+    <div class="panel" id="tab-title">
+        <div class="card">
+            <h2>🏛️ כותרת בית הכנסת</h2>
+            <label>שם בית הכנסת:</label>
+            <input type="text" id="synagogueName" value='בית הכנסת "שערי שלום ליעקב"' placeholder="שם בית הכנסת">
+            <label>צבע הכותרת:</label>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+                <input type="color" id="titleColor" value="#f1f5f9" style="width:64px;height:48px;padding:2px;cursor:pointer;border-radius:10px;border:1.5px solid #b3d1ff;flex-shrink:0;">
+                <span id="titleColorHex" style="font-size:0.95rem;font-weight:700;color:#004d77;">#f1f5f9</span>
+            </div>
+            <!-- תצוגה מקדימה -->
+            <div style="border-radius:12px;background:linear-gradient(135deg,#004d77,#0077b6);padding:16px;text-align:center;margin-bottom:12px;">
+                <div id="titleLivePreview" style="font-size:1.3rem;font-weight:bold;color:#f1f5f9;text-shadow:0 0 8px rgba(255,255,255,0.4);">בית הכנסת "שערי שלום ליעקב"</div>
+            </div>
+            <button class="btn btn-primary" onclick="saveAll()">💾 שמור כותרת</button>
+        </div>
+    </div>
+
+    <!-- רקע -->
+    <div class="panel" id="tab-bg">
+        <div class="card">
+            <h2>🎨 רקע כותרת</h2>
+            <label>צבע רקע כותרת:</label>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <input type="color" id="titleBgColor" value="#003c64" style="width:64px;height:48px;padding:2px;cursor:pointer;border-radius:10px;border:1.5px solid #b3d1ff;flex-shrink:0;" oninput="">
+                <div style="flex:1;">
+                    <label style="margin-bottom:4px;">שקיפות (0=שקוף, 1=מלא):</label>
+                    <input type="number" id="titleBgOpacity" value="0.55" min="0" max="1" step="0.05">
+                </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+                <button class="btn btn-gray" style="padding:6px 12px;font-size:0.8rem;margin:0;" onclick="setTitleBg('#003c64',0.55)">כחול כהה</button>
+                <button class="btn btn-gray" style="padding:6px 12px;font-size:0.8rem;margin:0;" onclick="setTitleBg('#1a0a00',0.65)">חום</button>
+                <button class="btn btn-gray" style="padding:6px 12px;font-size:0.8rem;margin:0;" onclick="setTitleBg('#000000',0.5)">שחור</button>
+                <button class="btn btn-gray" style="padding:6px 12px;font-size:0.8rem;margin:0;background:white;color:#003c64;border:1px solid #b3d1ff;" onclick="setTitleBg('#ffffff',0.8)">לבן</button>
+                <button class="btn btn-gray" style="padding:6px 12px;font-size:0.8rem;margin:0;background:transparent;color:#003c64;border:1px dashed #b3d1ff;" onclick="setTitleBg('#000000',0)">ללא</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🖼️ תמונות רקע (URL)</h2>
+            <p style="font-size:0.85rem;color:#5a7a8a;margin:0 0 12px 0;">הזן קישור לתמונה. השאר ריק לשמור על ברירת המחדל.</p>
+            <label>רקע דף חול:</label>
+            <input type="url" id="bgWeekdays" placeholder="https://...">
+            <label>רקע דף שבת:</label>
+            <input type="url" id="bgShabbat" placeholder="https://...">
+            <label>רקע זמני שבת:</label>
+            <input type="url" id="bgTimes" placeholder="https://...">
+
+            <hr style="border:none;border-top:1px dashed #dbeeff;margin:14px 0;">
+            <label style="font-weight:700;">🕯️ רקע דף נפטרים:</label>
+            <p style="font-size:0.82rem;color:#5a7a8a;margin:4px 0 8px 0;">ברירת מחדל: שחור. ניתן להגדיר תמונה או צבע.</p>
+            <label>תמונת רקע (URL):</label>
+            <input type="url" id="bgMemorial" placeholder="https://... (ריק = רקע שחור)">
+            <label style="margin-top:8px;">🎨 צבע רקע:</label>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+                <input type="color" id="memorialBgColor" value="#0a0a0a" style="width:52px;height:40px;padding:2px;border-radius:8px;border:1.5px solid #b3d1ff;cursor:pointer;">
+                <span style="font-size:0.85rem;color:#5a7a8a;">שקיפות:</span>
+                <input type="number" id="memorialBgOpacity" value="1" min="0" max="1" step="0.05" style="width:72px;">
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                <span style="cursor:pointer;background:#0a0a0a;color:#fff;padding:3px 8px;border-radius:5px;font-size:0.82rem;border:1px solid #444;" onclick="document.getElementById('memorialBgColor').value='#0a0a0a';document.getElementById('memorialBgOpacity').value='1'">שחור</span>
+                <span style="cursor:pointer;background:#1a0a00;color:#fff;padding:3px 8px;border-radius:5px;font-size:0.82rem;" onclick="document.getElementById('memorialBgColor').value='#1a0a00';document.getElementById('memorialBgOpacity').value='1'">חום עמוק</span>
+                <span style="cursor:pointer;background:#00001a;color:#fff;padding:3px 8px;border-radius:5px;font-size:0.82rem;" onclick="document.getElementById('memorialBgColor').value='#00001a';document.getElementById('memorialBgOpacity').value='1'">כחול לילה</span>
+            </div>
+            <button class="btn btn-primary" onclick="saveAll()">💾 שמור רקעים</button>
+        </div>
+
+        <div class="card" style="border-color:#d4af37;">
+            <h2>✍️ צבע כותרת "נר תמיד בהיכל ה'"</h2>
+            <p style="font-size:0.82rem;color:#5a7a8a;margin:0 0 10px 0;">צבע הטקסט של הכותרת המעוגלת בדף הנפטרים.</p>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                <input type="color" id="memorialTitleColor" value="#f1f5f9" style="width:52px;height:40px;padding:2px;border-radius:8px;border:1.5px solid #b3d1ff;cursor:pointer;" oninput="updateMemorialTitlePreview()">
+                <span id="memorialTitleColorHex" style="font-size:0.95rem;font-weight:700;color:#004d77;">#f1f5f9</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+                <button class="btn btn-gray" style="padding:5px 10px;font-size:0.8rem;margin:0;background:#f1f5f9;color:#003c64;border:1px solid #b3d1ff;" onclick="setMemorialTitleColor('#f1f5f9')">לבן</button>
+                <button class="btn btn-gray" style="padding:5px 10px;font-size:0.8rem;margin:0;background:#ffd700;color:#5a3a00;" onclick="setMemorialTitleColor('#ffd700')">זהב</button>
+                <button class="btn btn-gray" style="padding:5px 10px;font-size:0.8rem;margin:0;background:#87ceeb;color:#003060;" onclick="setMemorialTitleColor('#87ceeb')">תכלת</button>
+                <button class="btn btn-gray" style="padding:5px 10px;font-size:0.8rem;margin:0;background:#98fb98;color:#003000;" onclick="setMemorialTitleColor('#98fb98')">ירוק</button>
+                <button class="btn btn-gray" style="padding:5px 10px;font-size:0.8rem;margin:0;background:#ffb3b3;color:#5a0000;" onclick="setMemorialTitleColor('#ffb3b3')">ורוד</button>
+            </div>
+            <!-- תצוגה מקדימה -->
+            <div style="background:#0a0a0a;border-radius:10px;padding:14px;text-align:center;">
+                <span id="memorialTitlePreview" style="font-size:1.3rem;font-weight:bold;color:#f1f5f9;text-shadow:0 0 8px rgba(255,255,255,0.4);">🕯️ נר תמיד בהיכל ה׳ 🕯️</span>
+            </div>
+            <button class="btn btn-primary" style="margin-top:12px;" onclick="saveAll()">💾 שמור צבע כותרת</button>
+        </div>
+    </div>
+
+    <!-- גיבוי -->
+    <div class="panel" id="tab-backup">
+        <div class="card">
+            <h2>📋 גיבוי JSON (מלא)</h2>
+            <p style="font-size:0.88rem;color:#5a7a8a;margin:0 0 12px 0;">שומר הכל: הגדרות + נפטרים. מומלץ לגיבוי שוטף.</p>
+            <button class="btn btn-primary" onclick="exportJSON()">📥 ייצא JSON</button>
+            <label class="import-label btn-gray btn" style="background:linear-gradient(135deg,#6c757d,#495057);color:white;">
+                📤 ייבא JSON
+                <input type="file" accept=".json" onchange="importJSON(event)" style="display:none;">
+            </label>
+        </div>
+        <div class="card">
+            <h2>📊 ייבוא/ייצוא CSV — נפטרים</h2>
+            <p style="font-size:0.88rem;color:#5a7a8a;margin:0 0 12px 0;">ייבא CSV פעם אחת — הנפטרים יישמרו לצמיתות ולא תצטרך לייבא שוב.</p>
+            <button class="btn" style="background:linear-gradient(135deg,#198754,#146c43);color:white;" onclick="exportCSV()">📥 ייצא CSV</button>
+            <label class="import-label btn" style="background:linear-gradient(135deg,#6c757d,#495057);color:white;">
+                📤 ייבא CSV נפטרים
+                <input type="file" accept=".csv" onchange="importCSV(event)" style="display:none;">
+            </label>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+    let deceasedArray = [];
+
+    const dayLettersMap = {
+        1:"א'", 2:"ב'", 3:"ג'", 4:"ד'", 5:"ה'", 6:"ו'", 7:"ז'", 8:"ח'", 9:"ט'", 10:"י'",
+        11:'י"א', 12:'י"ב', 13:'י"ג', 14:'י"ד', 15:'ט"ו', 16:'ט"ז', 17:'י"ז', 18:'י"ח',
+        19:'י"ט', 20:"כ'", 21:'כ"א', 22:'כ"ב', 23:'כ"ג', 24:'כ"ד', 25:'כ"ה',
+        26:'כ"ו', 27:'כ"ז', 28:'כ"ח', 29:'כ"ט', 30:"ל'"
+    };
+
+    function showTab(id) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function showToast(msg, color) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = color || '#065f46';
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function getSunsetForMonth() {
+        const manual = localStorage.getItem('sunset_manual');
+        if (manual) return manual;
+        const m = new Date().getMonth() + 1;
+        const data = {
+            1:"16:56",2:"17:25",3:"17:47",4:"19:09",5:"19:31",6:"19:49",
+            7:"19:48",8:"19:25",9:"18:46",10:"18:07",11:"16:38",12:"16:35"
+        };
+        return data[m] || "19:49";
+    }
+
+    function getSunriseForMonth() {
+        const manual = localStorage.getItem('sunrise_manual');
+        if (manual) return manual;
+        const m = new Date().getMonth() + 1;
+        const data = {
+            1:"06:45",2:"06:30",3:"06:00",4:"05:30",5:"05:10",6:"05:02",
+            7:"05:15",8:"05:35",9:"06:00",10:"06:25",11:"06:00",12:"06:30"
+        };
+        return data[m] || "06:00";
+    }
+
+    function saveManualSunTimes() {
+        const sunset = document.getElementById('sunsetManual').value;
+        const sunrise = document.getElementById('sunriseManual').value;
+        if (sunset) localStorage.setItem('sunset_manual', sunset);
+        if (sunrise) localStorage.setItem('sunrise_manual', sunrise);
+        updatePreviews();
+        updateSunTimesUI();
+        saveAll(true);
+        showToast('✅ זמני זריחה/שקיעה נשמרו!');
+    }
+
+    function clearManualSunTimes() {
+        localStorage.removeItem('sunset_manual');
+        localStorage.removeItem('sunrise_manual');
+        document.getElementById('sunsetManual').value = '';
+        document.getElementById('sunriseManual').value = '';
+        updatePreviews();
+        updateSunTimesUI();
+        saveAll(true);
+        showToast('✅ חזר לחישוב אוטומטי');
+    }
+
+    function updateSunTimesUI() {
+        const hasManual = localStorage.getItem('sunset_manual') || localStorage.getItem('sunrise_manual');
+        const preview = document.getElementById('sunTimesPreview');
+        const sr = getSunriseForMonth();
+        const ss = getSunsetForMonth();
+        preview.style.display = 'block';
+        if (hasManual) {
+            preview.style.background = '#fff8e8';
+            preview.style.borderColor = '#fcd34d';
+            preview.style.color = '#92400e';
+            preview.textContent = `📌 ידני פעיל — זריחה: ${sr} | שקיעה: ${ss}`;
+        } else {
+            preview.style.background = '#f0f7ff';
+            preview.style.borderColor = '#b3d1ff';
+            preview.style.color = '#005b8e';
+            preview.textContent = `🔄 אוטומטי — זריחה: ${sr} | שקיעה: ${ss}`;
+        }
+    }
+
+    function saveManualShabbatTimes() {
+        const start = document.getElementById('shabbatStartManual').value;
+        const end = document.getElementById('shabbatEndManual').value;
+        if (start) localStorage.setItem('shabbat_start_manual', start);
+        if (end) localStorage.setItem('shabbat_end_manual', end);
+        updateShabbatTimesUI();
+        saveAll(true);
+        showToast('✅ זמני כניסת/יציאת שבת נשמרו!');
+    }
+
+    function clearManualShabbatTimes() {
+        localStorage.removeItem('shabbat_start_manual');
+        localStorage.removeItem('shabbat_end_manual');
+        document.getElementById('shabbatStartManual').value = '';
+        document.getElementById('shabbatEndManual').value = '';
+        updateShabbatTimesUI();
+        saveAll(true);
+        showToast('✅ חזר לחישוב אוטומטי');
+    }
+
+    function updateShabbatTimesUI() {
+        const start = localStorage.getItem('shabbat_start_manual');
+        const end = localStorage.getItem('shabbat_end_manual');
+        const preview = document.getElementById('shabbatTimesPreview');
+        if (start || end) {
+            preview.style.display = 'block';
+            preview.style.background = '#fff8e8';
+            preview.style.borderColor = '#fcd34d';
+            preview.style.color = '#92400e';
+            preview.textContent = `📌 ידני פעיל — כניסת שבת: ${start || 'אוטומטי'} | יציאת שבת: ${end || 'אוטומטי'}`;
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    function offsetTime(timeStr, offset) {
+        const [h0,m0] = timeStr.split(':').map(Number);
+        let total = h0*60 + m0 + offset;
+        total = ((total%1440)+1440)%1440;
+        return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+    }
+
+    function updatePreviews() {
+        const sunset = getSunsetForMonth();
+        const mOff = parseInt(document.getElementById('minchaOffset').value);
+        const aOff = parseInt(document.getElementById('arvitOffset').value);
+        if (!isNaN(mOff)) {
+            const label = mOff < 0 ? `${Math.abs(mOff)} דק' לפני שקיעה` : `${mOff} דק' אחרי שקיעה`;
+            document.getElementById('minchaPreview').textContent = `⏰ ${offsetTime(sunset,mOff)} (${label})`;
+        }
+        if (!isNaN(aOff)) {
+            const label = aOff < 0 ? `${Math.abs(aOff)} דק' לפני שקיעה` : `${aOff} דק' אחרי שקיעה`;
+            document.getElementById('arvitPreview').textContent = `⏰ ${offsetTime(sunset,aOff)} (${label})`;
+        }
+    }
+
+    function toggleInputs() {
+        const m = document.getElementById('minchaMode').value;
+        document.getElementById('minchaAutoDiv').style.display = m === 'auto' ? 'block' : 'none';
+        document.getElementById('minchaManualDiv').style.display = m === 'manual' ? 'block' : 'none';
+        const a = document.getElementById('arvitMode').value;
+        document.getElementById('arvitAutoDiv').style.display = a === 'auto' ? 'block' : 'none';
+        document.getElementById('arvitManualDiv').style.display = a === 'manual' ? 'block' : 'none';
+        updatePreviews();
+    }
+
+    function addDeceased() {
+        const name = document.getElementById('decName').value.trim();
+        if (!name) { showToast('נא להקליד שם נפטר', '#dc3545'); return; }
+        const dayNum = parseInt(document.getElementById('decDay').value);
+        const month = document.getElementById('decMonth').value;
+        const year = document.getElementById('decYear').value.trim() || '';
+        deceasedArray.push({ name, day: dayNum, month, year });
+        document.getElementById('decName').value = '';
+        document.getElementById('decYear').value = '';
+        renderDeceasedList();
+        saveAll(true);
+        showToast(`✅ ${name} נוסף/ה לרשימה`);
+    }
+
+    function removeDeceased(index) {
+        if (!confirm(`למחוק את ${deceasedArray[index].name}?`)) return;
+        deceasedArray.splice(index, 1);
+        renderDeceasedList();
+        saveAll(true);
+        showToast('🗑️ הנפטר הוסר מהרשימה', '#6c757d');
+    }
+
+    function renderDeceasedList() {
+        const container = document.getElementById('deceasedListContainer');
+        const title = document.getElementById('listTitle');
+        if (deceasedArray.length === 0) {
+            container.innerHTML = '<div class="empty-list">אין נפטרים ברשימה</div>';
+            title.textContent = 'רשימת הנפטרים';
+            return;
+        }
+        title.textContent = `רשימת הנפטרים (${deceasedArray.length})`;
+        container.innerHTML = deceasedArray.map((item, idx) => {
+            const dayText = dayLettersMap[item.day] || item.day;
+            const yearText = item.year ? ` ${item.year}` : '';
+            return `<div class="deceased-item">
+                <div>
+                    <div class="name">${item.name}</div>
+                    <div class="date">${dayText} ב${item.month}${yearText}</div>
+                </div>
+                <div class="actions">
+                    <button class="btn-sm" style="background:#e8a000;color:white;" onclick="editDeceased(${idx})">✏️ ערוך</button>
+                    <button class="btn-sm" style="background:#dc3545;color:white;" onclick="removeDeceased(${idx})">מחק</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function editDeceased(index) {
+        const item = deceasedArray[index];
+        document.getElementById('decName').value = item.name;
+        document.getElementById('decDay').value = item.day;
+        document.getElementById('decMonth').value = item.month;
+        document.getElementById('decYear').value = item.year || '';
+        deceasedArray.splice(index, 1);
+        renderDeceasedList();
+        document.getElementById('decName').focus();
+        document.getElementById('decName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('✏️ ערוך את הפרטים ולחץ הוסף');
+    }
+
+    function updateStatusBanner() {
+        const banner = document.getElementById('statusBanner');
+        const count = deceasedArray.length;
+        if (count > 0) {
+            banner.className = 'status-banner ok';
+            banner.innerHTML = `✅ נטען אוטומטית — <span class="count-pill">${count} נפטרים</span>`;
+        } else {
+            banner.className = 'status-banner warn';
+            banner.innerHTML = `⚠️ אין נפטרים שמורים — ייבא CSV בלשונית גיבוי`;
+        }
+    }
+
+    function updateHolidayBadgeStatus() {
+        const cb = document.getElementById('showHolidayBadge');
+        const st = document.getElementById('showHolidayBadgeStatus');
+        if (!cb || !st) return;
+        st.textContent = cb.checked ? '✓ פעיל' : '✗ לא פעיל';
+        st.style.color = cb.checked ? '#1a8a4a' : '#b02020';
+    }
+
+    function saveAll(silent) {
+        const config = {
+            pageInterval: document.getElementById('pageInterval').value,
+            synagogueName: document.getElementById('synagogueName').value,
+            titleColor: document.getElementById('titleColor').value,
+            announcement: document.getElementById('announcementText').value,
+            showAutoHolidayBadge: document.getElementById('showHolidayBadge').checked,
+            shacharitTime: document.getElementById('shacharitTime').value,
+            minchaMode: document.getElementById('minchaMode').value,
+            minchaTime: document.getElementById('minchaTime').value,
+            minchaOffset: document.getElementById('minchaOffset').value,
+            arvitMode: document.getElementById('arvitMode').value,
+            arvitTime: document.getElementById('arvitTime').value,
+            arvitOffset: document.getElementById('arvitOffset').value,
+            shabbatMinchaErev: document.getElementById('shabbatMinchaErev').value,
+            shabbatShacharit: document.getElementById('shabbatShacharit').value,
+            shabbatMincha: document.getElementById('shabbatMincha').value,
+            shabbatArvitMotzei: document.getElementById('shabbatArvitMotzei').value,
+            sunsetManual: document.getElementById('sunsetManual').value || null,
+            sunriseManual: document.getElementById('sunriseManual').value || null,
+            shabbatStartManual: document.getElementById('shabbatStartManual').value || null,
+            shabbatEndManual: document.getElementById('shabbatEndManual').value || null,
+            parashaManual: localStorage.getItem('parasha_manual') || null,
+            cardBg: document.getElementById('cardBgColor').dataset.raw || document.getElementById('cardBgColor').value,
+            cardTextColor: document.getElementById('cardTextColor').value,
+            cardBorderColor: document.getElementById('cardBorderColor').value,
+            cardBorderWidth: document.getElementById('cardBorderWidth').value,
+            cardFontSize: document.getElementById('cardFontSize').value,
+            gridCols: parseInt(document.getElementById('gridCols').value) || 4,
+            gridRows: parseInt(document.getElementById('gridRows').value) || 4,
+            titleBgColor: document.getElementById('titleBgColor').value,
+            titleBgOpacity: document.getElementById('titleBgOpacity').value,
+            bgWeekdays: document.getElementById('bgWeekdays').value || null,
+            bgShabbat: document.getElementById('bgShabbat').value || null,
+            bgTimes: document.getElementById('bgTimes').value || null,
+            bgMemorial: document.getElementById('bgMemorial').value || null,
+            memorialBgColor: document.getElementById('memorialBgColor').value,
+            memorialBgOpacity: document.getElementById('memorialBgOpacity').value,
+            memorialTitleColor: document.getElementById('memorialTitleColor').value,
+            deceasedList: deceasedArray
+        };
+        localStorage.setItem('synagogue_config', JSON.stringify(config));
+        updateStatusBanner();
+
+        // שמור ב-Firebase
+        if (window._firestoreDb) {
+            const { doc, setDoc } = window._firestoreFns;
+            setDoc(doc(window._firestoreDb, "synagogue", "config"), config)
+                .then(() => { if (!silent) showToast('✅ נשמר ועודכן הלוח!'); })
+                .catch(() => { if (!silent) showToast('⚠️ שמור מקומית בלבד', '#f59e0b'); });
+        } else {
+            if (!silent) showToast('✅ נשמר!');
+        }
+        return config;
+    }
+
+    function exportJSON() {
+        const config = saveAll(true);
+        const blob = new Blob([JSON.stringify(config,null,2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `synagogue_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const config = JSON.parse(e.target.result);
+                localStorage.setItem('synagogue_config', JSON.stringify(config));
+                loadFromStorage();
+                showToast('✅ ייבוא JSON הצליח!');
+            } catch { showToast('❌ שגיאה בקובץ JSON', '#dc3545'); }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+
+    function exportCSV() {
+        const BOM = '\uFEFF';
+        let csv = BOM + 'שם,יום,חודש,שנה\n';
+        deceasedArray.forEach(item => {
+            const wrap = v => String(v).includes(',') ? `"${v}"` : String(v);
+            csv += `${wrap(item.name)},${wrap(item.day)},${wrap(item.month)},${wrap(item.year||'')}\n`;
+        });
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `niftarim_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const text = e.target.result.replace(/^\uFEFF/,'');
+                const lines = text.split(/\r?\n/).filter(l => l.trim());
+                const startIdx = (lines[0].includes('שם') || lines[0].toLowerCase().includes('name')) ? 1 : 0;
+                const imported = [];
+                for (let i = startIdx; i < lines.length; i++) {
+                    const cols = lines[i].match(/(".*?"|[^,]+)(?=,|$)/g) || [];
+                    const clean = cols.map(c => c.replace(/^"|"$/g,'').trim());
+                    const [name,day,month,year] = clean;
+                    if (!name||!day||!month) continue;
+                    const dayNum = parseInt(day);
+                    if (isNaN(dayNum)||dayNum<1||dayNum>30) continue;
+                    imported.push({name,day:dayNum,month,year:year||''});
+                }
+                if (imported.length===0) { showToast('⚠️ לא נמצאו נפטרים בקובץ','#f59e0b'); return; }
+                const existing = new Set(deceasedArray.map(d=>d.name));
+                const newItems = imported.filter(d=>!existing.has(d.name));
+                deceasedArray = [...deceasedArray,...newItems];
+                renderDeceasedList();
+                saveAll(true);
+                showToast(`✅ יובאו ${imported.length} נפטרים (${newItems.length} חדשים)`);
+            } catch { showToast('❌ שגיאה בקריאת CSV','#dc3545'); }
+            event.target.value = '';
+        };
+        reader.readAsText(file,'UTF-8');
+    }
+
+    function calibrateParasha() {
+        const idx = parseInt(document.getElementById('parashaSelect').value);
+        const today = new Date();
+        const sat = new Date(today);
+        sat.setDate(today.getDate() + ((6-today.getDay()+7)%7));
+        sat.setHours(0,0,0,0);
+        localStorage.setItem('parasha_anchor', JSON.stringify({date:sat.toISOString(),idx}));
+        saveAll(true);
+        showToast('✅ הפרשה עודכנה!');
+    }
+
+    function setCardBg(rawVal) {
+        document.getElementById('cardBgColor').dataset.raw = rawVal;
+        updateCardPreview();
+    }
+
+    function updateGridSummary() {
+        const cols = parseInt(document.getElementById('gridCols').value) || 4;
+        const rows = parseInt(document.getElementById('gridRows').value) || 4;
+        const el = document.getElementById('gridSummary');
+        if (el) el.textContent = `גריד: ${cols}×${rows} = ${cols * rows} קוביות בדף`;
+    }
+
+    function updateCardPreview() {
+        const el = document.getElementById('cardBgColor');
+        const bg = el.dataset.raw || el.value;
+        const textColor = document.getElementById('cardTextColor').value;
+        const borderColor = document.getElementById('cardBorderColor').value;
+        const borderWidth = document.getElementById('cardBorderWidth').value || 2;
+        const fontSize = document.getElementById('cardFontSize').value || 1.2;
+        const card = document.getElementById('previewCard1');
+        if (!card) return;
+        card.style.background = bg;
+        card.style.border = `${borderWidth}px solid ${borderColor}`;
+        ['previewName1','previewDate1','previewSuffix1'].forEach(id => {
+            const el2 = document.getElementById(id);
+            if (el2) el2.style.color = textColor;
+        });
+        const name = document.getElementById('previewName1');
+        if (name) name.style.fontSize = fontSize + 'rem';
+    }
+
+    function setMemorialTitleColor(hex) {
+        document.getElementById('memorialTitleColor').value = hex;
+        updateMemorialTitlePreview();
+    }
+
+    function updateMemorialTitlePreview() {
+        const color = document.getElementById('memorialTitleColor').value;
+        const preview = document.getElementById('memorialTitlePreview');
+        const hexLabel = document.getElementById('memorialTitleColorHex');
+        if (preview) { preview.style.color = color; preview.style.textShadow = `0 0 8px ${color}88`; }
+        if (hexLabel) hexLabel.textContent = color;
+    }
+
+    function setTitleBg(hex, opacity) {
+        document.getElementById('titleBgColor').value = hex;
+        document.getElementById('titleBgOpacity').value = opacity;
+    }
+
+    function setManualParasha() {
+        const val = document.getElementById('parashaManual').value.trim();
+        if (!val) { showToast('⚠️ יש להזין שם פרשה', '#f59e0b'); return; }
+        localStorage.setItem('parasha_manual', val);
+        const statusEl = document.getElementById('manualParashaStatus');
+        statusEl.textContent = `📌 פרשה ידנית פעילה: "${val}"`;
+        statusEl.style.display = 'block';
+        saveAll(true);
+        showToast(`✅ פרשה ידנית נקבעה: "${val}"`);
+    }
+
+    function clearManualParasha() {
+        localStorage.removeItem('parasha_manual');
+        document.getElementById('parashaManual').value = '';
+        document.getElementById('manualParashaStatus').style.display = 'none';
+        saveAll(true);
+        showToast('✅ פרשה ידנית בוטלה — חישוב אוטומטי פעיל');
+    }
+
+    function updateTitlePreview() {
+        const name = document.getElementById('synagogueName').value;
+        const color = document.getElementById('titleColor').value;
+        document.getElementById('titleLivePreview').textContent = name || 'שם בית הכנסת';
+        document.getElementById('titleLivePreview').style.color = color;
+        document.getElementById('titleColorHex').textContent = color;
+        document.getElementById('titleColorHex').style.color = color;
+    }
+    document.getElementById('synagogueName').addEventListener('input', updateTitlePreview);
+    document.getElementById('titleColor').addEventListener('input', updateTitlePreview);
+
+    function loadFromStorage() {
+        try {
+            const stored = localStorage.getItem('synagogue_config');
+            if (stored) {
+                const config = JSON.parse(stored);
+                if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+                if (config.synagogueName) document.getElementById('synagogueName').value = config.synagogueName;
+                if (config.titleColor) document.getElementById('titleColor').value = config.titleColor;
+                document.getElementById('announcementText').value = config.announcement || '';
+                document.getElementById('showHolidayBadge').checked = config.showAutoHolidayBadge !== false; updateHolidayBadgeStatus();
+                document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
+                document.getElementById('minchaMode').value = config.minchaMode || 'auto';
+                document.getElementById('minchaTime').value = config.minchaTime || '18:30';
+                document.getElementById('minchaOffset').value = config.minchaOffset !== undefined ? config.minchaOffset : '-20';
+                document.getElementById('arvitMode').value = config.arvitMode || 'auto';
+                document.getElementById('arvitTime').value = config.arvitTime || '19:30';
+                document.getElementById('arvitOffset').value = config.arvitOffset !== undefined ? config.arvitOffset : '20';
+                document.getElementById('shabbatMinchaErev').value = config.shabbatMinchaErev || '';
+                document.getElementById('shabbatShacharit').value = config.shabbatShacharit || '08:00';
+                document.getElementById('shabbatMincha').value = config.shabbatMincha || '18:00';
+                document.getElementById('shabbatArvitMotzei').value = config.shabbatArvitMotzei || '';
+                if (config.shabbatStartManual) { localStorage.setItem('shabbat_start_manual', config.shabbatStartManual); document.getElementById('shabbatStartManual').value = config.shabbatStartManual; }
+                if (config.shabbatEndManual) { localStorage.setItem('shabbat_end_manual', config.shabbatEndManual); document.getElementById('shabbatEndManual').value = config.shabbatEndManual; }
+                updateShabbatTimesUI();
+                deceasedArray = config.deceasedList || [];
+                renderDeceasedList();
+                if (config.cardBg) { document.getElementById('cardBgColor').dataset.raw = config.cardBg; }
+                if (config.cardTextColor) document.getElementById('cardTextColor').value = config.cardTextColor;
+                if (config.cardBorderColor) document.getElementById('cardBorderColor').value = config.cardBorderColor;
+                if (config.cardBorderWidth) document.getElementById('cardBorderWidth').value = config.cardBorderWidth;
+                if (config.cardFontSize) document.getElementById('cardFontSize').value = config.cardFontSize;
+                if (config.gridCols) document.getElementById('gridCols').value = config.gridCols;
+                if (config.gridRows) document.getElementById('gridRows').value = config.gridRows;
+                updateGridSummary();
+                if (config.titleBgColor) document.getElementById('titleBgColor').value = config.titleBgColor;
+                if (config.titleBgOpacity !== undefined) document.getElementById('titleBgOpacity').value = config.titleBgOpacity;
+                if (config.bgWeekdays) document.getElementById('bgWeekdays').value = config.bgWeekdays;
+                if (config.bgShabbat) document.getElementById('bgShabbat').value = config.bgShabbat;
+                if (config.bgTimes) document.getElementById('bgTimes').value = config.bgTimes;
+                if (config.bgMemorial) document.getElementById('bgMemorial').value = config.bgMemorial;
+                if (config.memorialBgColor) document.getElementById('memorialBgColor').value = config.memorialBgColor;
+                if (config.memorialBgOpacity !== undefined) document.getElementById('memorialBgOpacity').value = config.memorialBgOpacity;
+                if (config.memorialTitleColor) { document.getElementById('memorialTitleColor').value = config.memorialTitleColor; updateMemorialTitlePreview(); }
+                updateCardPreview();
+            }
+        } catch(e) { console.error(e); }
+        toggleInputs();
+        updateStatusBanner();
+        updateTitlePreview();
+    }
+
+    loadFromStorage();
+
+    // טען פרשה ידנית קיימת
+    const _manualParasha = localStorage.getItem('parasha_manual');
+    if (_manualParasha) {
+        document.getElementById('parashaManual').value = _manualParasha;
+        const statusEl = document.getElementById('manualParashaStatus');
+        statusEl.textContent = `📌 פרשה ידנית פעילה: "${_manualParasha}"`;
+        statusEl.style.display = 'block';
+    }
+
+    // טען זמני זריחה/שקיעה ידניים
+    const _sunsetM = localStorage.getItem('sunset_manual');
+    const _sunriseM = localStorage.getItem('sunrise_manual');
+    if (_sunsetM) document.getElementById('sunsetManual').value = _sunsetM;
+    if (_sunriseM) document.getElementById('sunriseManual').value = _sunriseM;
+    updateSunTimesUI();
+
+    // טען זמני כניסת/יציאת שבת ידניים
+    const _shabbatStartM = localStorage.getItem('shabbat_start_manual');
+    const _shabbatEndM = localStorage.getItem('shabbat_end_manual');
+    if (_shabbatStartM) document.getElementById('shabbatStartManual').value = _shabbatStartM;
+    if (_shabbatEndM) document.getElementById('shabbatEndManual').value = _shabbatEndM;
+    updateShabbatTimesUI();
+</script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('[Mobile-Admin] SW registered'))
+            .catch(err => console.warn('[Mobile-Admin] SW failed:', err));
+    }
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCZIxHuEyiCkzQVoZIa1fG5yZwoHA_y8zg",
+        authDomain: "ai-screen-77c8e.firebaseapp.com",
+        projectId: "ai-screen-77c8e",
+        storageBucket: "ai-screen-77c8e.firebasestorage.app",
+        messagingSenderId: "753205820340",
+        appId: "1:753205820340:web:1072073f4758b63b8990e1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ── Offline Persistence ──
+    try {
+        await enableIndexedDbPersistence(db);
+        console.log('[Firebase] Offline persistence enabled');
+    } catch(err) {
+        console.warn('[Firebase] Persistence:', err.code);
+    }
+
+    window._firestoreDb = db;
+    window._firestoreFns = { doc, setDoc };
+
+    // טען מ-Firebase בפתיחה (עובד גם אופליין)
+    try {
+        const docSnap = await getDoc(doc(db, "synagogue", "config"));
+        if (docSnap.exists()) {
+            const config = docSnap.data();
+            const fromCache = docSnap.metadata.fromCache;
+            localStorage.setItem('synagogue_config', JSON.stringify(config));
+            if (config.pageInterval) document.getElementById('pageInterval').value = config.pageInterval;
+            if (config.synagogueName) document.getElementById('synagogueName').value = config.synagogueName;
+            if (config.titleColor) document.getElementById('titleColor').value = config.titleColor;
+            document.getElementById('announcementText').value = config.announcement || '';
+            document.getElementById('showHolidayBadge').checked = config.showAutoHolidayBadge !== false; updateHolidayBadgeStatus();
+            document.getElementById('shacharitTime').value = config.shacharitTime || '05:45';
+            document.getElementById('minchaMode').value = config.minchaMode || 'auto';
+            document.getElementById('minchaTime').value = config.minchaTime || '18:30';
+            document.getElementById('minchaOffset').value = config.minchaOffset !== undefined ? config.minchaOffset : '-20';
+            document.getElementById('arvitMode').value = config.arvitMode || 'auto';
+            document.getElementById('arvitTime').value = config.arvitTime || '19:30';
+            document.getElementById('arvitOffset').value = config.arvitOffset !== undefined ? config.arvitOffset : '20';
+            document.getElementById('shabbatMinchaErev').value = config.shabbatMinchaErev || '';
+            document.getElementById('shabbatShacharit').value = config.shabbatShacharit || '08:00';
+            document.getElementById('shabbatMincha').value = config.shabbatMincha || '18:00';
+            document.getElementById('shabbatArvitMotzei').value = config.shabbatArvitMotzei || '';
+            deceasedArray = config.deceasedList || [];
+            renderDeceasedList();
+            if (config.cardBg) { document.getElementById('cardBgColor').dataset.raw = config.cardBg; }
+            if (config.cardTextColor) document.getElementById('cardTextColor').value = config.cardTextColor;
+            if (config.cardBorderColor) document.getElementById('cardBorderColor').value = config.cardBorderColor;
+            if (config.cardBorderWidth) document.getElementById('cardBorderWidth').value = config.cardBorderWidth;
+            if (config.cardFontSize) document.getElementById('cardFontSize').value = config.cardFontSize;
+            if (config.gridCols) document.getElementById('gridCols').value = config.gridCols;
+            if (config.gridRows) document.getElementById('gridRows').value = config.gridRows;
+            updateGridSummary();
+            if (config.titleBgColor) document.getElementById('titleBgColor').value = config.titleBgColor;
+            if (config.titleBgOpacity !== undefined) document.getElementById('titleBgOpacity').value = config.titleBgOpacity;
+            if (config.bgWeekdays) document.getElementById('bgWeekdays').value = config.bgWeekdays;
+            if (config.bgShabbat) document.getElementById('bgShabbat').value = config.bgShabbat;
+            if (config.bgTimes) document.getElementById('bgTimes').value = config.bgTimes;
+            if (config.bgMemorial) document.getElementById('bgMemorial').value = config.bgMemorial;
+            if (config.memorialBgColor) document.getElementById('memorialBgColor').value = config.memorialBgColor;
+            if (config.memorialBgOpacity !== undefined) document.getElementById('memorialBgOpacity').value = config.memorialBgOpacity;
+            if (config.memorialTitleColor) { document.getElementById('memorialTitleColor').value = config.memorialTitleColor; updateMemorialTitlePreview(); }
+            updateCardPreview();
+            toggleInputs();
+            updateStatusBanner();
+            updateTitlePreview();
+
+            const banner = document.getElementById('statusBanner');
+            const count = deceasedArray.length;
+            if (count > 0) {
+                banner.className = 'status-banner ok';
+                const src = fromCache ? '💾 נטען מקאש מקומי' : '☁️ נטען מהענן';
+                banner.innerHTML = `${src} — <span class="count-pill">${count} נפטרים</span>`;
+            }
+        }
+    } catch(e) {
+        console.log('[Firebase] Load error (offline?):', e.message);
+        const banner = document.getElementById('statusBanner');
+        if (banner) {
+            banner.className = 'status-banner warn';
+            banner.innerHTML = '⚠️ אופליין — עובד עם נתונים מקומיים';
+        }
+    }
+</script>
+</body>
+</html>
