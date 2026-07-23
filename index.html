@@ -59,7 +59,7 @@
     <script>
         // pageIds נבנה דינמית לפי מספר עמודי הנפטרים
         let pageIds = ["page-weekdays", "page-shabbat", "page-times", "page-memorial"];
-        let currentIdx = 0, slideInterval = null, globalSun = null;
+        let currentIdx = 0, slideInterval = null, globalSun = null, currentSpecialDay = null;
 
         const dayLettersMap = {
             1:"א'", 2:"ב'", 3:"ג'", 4:"ד'", 5:"ה'", 6:"ו'", 7:"ז'", 8:"ח'", 9:"ט'", 10:"י'",
@@ -74,6 +74,19 @@
         }, 1000);
 
         // ───── מצגת דפים ─────
+        // מציג/מסתיר את תג החג/ר"ח/צום — מוסתר בדפי נפטרים (העיצוב שם שמור לזיכרון הנפטר, לא למידע כללי)
+        function updateBadgeVisibility() {
+            const badge = document.getElementById('special-day-badge');
+            const isMemorialPage = (pageIds[currentIdx] || '').startsWith('page-memorial');
+            if (currentSpecialDay && !isMemorialPage) {
+                badge.textContent = currentSpecialDay.text;
+                badge.className = 'special-day-badge active ' + currentSpecialDay.type;
+            } else {
+                badge.textContent = '';
+                badge.className = 'special-day-badge';
+            }
+        }
+
         function startSlideshow(seconds) {
             if (slideInterval) clearInterval(slideInterval);
             slideInterval = setInterval(() => {
@@ -97,7 +110,6 @@
                 document.getElementById(pageIds[currentIdx]).classList.add('active');
                 // עדכן כותרת לפי דף
                 const titleEl = document.getElementById('synagogue-title');
-                const badgeEl = document.getElementById('special-day-badge');
                 if (pageIds[currentIdx].startsWith('page-memorial')) {
                     const memTitleColor = (JSON.parse(localStorage.getItem('synagogue_config') || '{}').memorialTitleColor) || '#f1f5f9';
                     titleEl.innerHTML = `<svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:860px;height:120px;display:block;margin:0 auto;overflow:visible;">
@@ -112,12 +124,10 @@
                             <textPath href="#arc-path" startOffset="50%">🕯️ נר תמיד בהיכל ה׳ 🕯️</textPath>
                         </text>
                     </svg>`;
-                    // בדפי נפטרים (נר תמיד) — התג האוטומטי לא מוצג, כדי לא להפריע לעיצוב הדף המיוחד
-                    if (badgeEl) badgeEl.style.display = 'none';
                 } else {
                     titleEl.innerHTML = JSON.parse(localStorage.getItem('synagogue_config') || '{}').synagogueName || 'בית הכנסת "שערי שלום ליעקב"';
-                    if (badgeEl) badgeEl.style.display = '';
                 }
+                updateBadgeVisibility();
             }, seconds * 1000);
         }
 
@@ -164,34 +174,30 @@
             return null;
         }
 
-        // הצומות (וכן יום כיפור) מתחילים הלכתית בשקיעה של הערב הקודם, לא בחצות.
-        // הפונקציה מחזירה את "התאריך העברי הרלוונטי": אם השעה הנוכחית כבר עברה את השקיעה,
-        // מתייחסים ליום המחרת כאילו כבר התחיל (הלוח העברי "מתגלגל" בשקיעה, לא בחצות).
-        function getHalachicEffectiveDate(now, sunsetStr) {
-            if (!sunsetStr) return now; // אין עדיין נתוני שקיעה — נופלים חזרה על חצות
-            const [sh, sm] = sunsetStr.split(':').map(Number);
-            const sunsetToday = new Date(now);
-            sunsetToday.setHours(sh, sm, 0, 0);
-            if (now >= sunsetToday) {
-                const next = new Date(now);
-                next.setDate(next.getDate() + 1);
-                return next;
-            }
-            return now;
-        }
-
         function getSpecialDayInfo() {
             const now = new Date();
-            const { day, month } = getHebDayMonth(now);
-            const dow = now.getDay(); // 0=ראשון ... 6=שבת
+            const nowMins = now.getHours() * 60 + now.getMinutes();
 
-            // תאריך עברי "אפקטיבי" — לצומות בלבד — כדי שהתג ידלק כבר מהשקיעה של הערב הקודם
-            const fastNow = getHalachicEffectiveDate(now, globalSun && globalSun.s);
-            const { day: fastDay, month: fastMonth } = getHebDayMonth(fastNow);
-            const fastDow = fastNow.getDay();
+            // האם השקיעה של היום כבר עברה? (משתמש בזמן השקיעה שכבר מחושב במערכת)
+            let pastSunset = false;
+            if (globalSun && globalSun.s) {
+                const [sh, sm] = globalSun.s.split(':').map(Number);
+                pastSunset = nowMins >= (sh * 60 + sm);
+            }
 
-            // חנוכה (נבדק ראשון כי חוצה חודשים וגם כדי לגבור על "ראש חודש טבת")
-            const candle = findChanukahCandle(now, month, day);
+            // תאריך "לילי" (מוזז ליום המחרת אחרי השקיעה) — לשימוש בחגים, יוה"כ, ט' באב ור"ח,
+            // שכולם מתחילים הלכתית מהערב הקודם (כניסה/הדלקת נרות), לא מחצות
+            const nightDate = new Date(now);
+            if (pastSunset) nightDate.setDate(nightDate.getDate() + 1);
+            const { day, month } = getHebDayMonth(nightDate);
+            const dow = nightDate.getDay(); // 0=ראשון ... 6=שבת
+
+            // תאריך "אזרחי" (לא מוזז) — לצומות הקלים, שמתחילים מעלות השחר של אותו יום ולא מהערב הקודם
+            const civil = getHebDayMonth(now);
+            const cDow = now.getDay();
+
+            // חנוכה (מחושב לפי התאריך הלילי — הדלקת הנרות היא בערב)
+            const candle = findChanukahCandle(nightDate, month, day);
             if (candle) return { text: `🕎 חנוכה — נר ${dayLettersMap[candle] || candle}`, type: 'chag' };
 
             // חגים ומועדים קבועים בתאריך עברי (כולל ראש השנה, שגובר על "ראש חודש תשרי")
@@ -215,28 +221,29 @@
                 if (day === 15) return { text: '🎭 שושן פורים', type: 'chag' };
             }
 
-            // יום כיפור — גם הוא נכנס בשקיעת ערב תשרי ט', ולכן נבדק לפי התאריך האפקטיבי
-            if (fastMonth === 'תשרי' && fastDay === 10) return { text: '🕊️ יום כיפור', type: 'fast' };
+            // יום כיפור — מוזז (מתחיל בערב, כמו שבת)
+            if (month === 'תשרי' && day === 10) return { text: '🕊️ יום כיפור', type: 'fast' };
 
-            // ארבעת הצומות — כולל דחייה כשחלים בשבת. נבדקים לפי fastDay/fastMonth/fastDow
-            // כדי שהתג ידלק כבר מהשקיעה של הערב הקודם (תחילת הצום בפועל), לא רק מחצות
-            if (fastMonth === 'תשרי' && ((fastDay === 3 && fastDow !== 6) || (fastDay === 4 && fastDow === 0)))
-                return { text: '🕯️ צום גדליה', type: 'fast' };
-            if (fastMonth === 'טבת' && fastDay === 10)
-                return { text: '🕯️ עשרה בטבת', type: 'fast' };
-            if (fastMonth === 'אדר' || fastMonth === 'אדר ב׳') {
-                if (fastDay === 13 && fastDow !== 6) return { text: '🕯️ תענית אסתר', type: 'fast' };
-                if (fastDay === 11 && fastDow === 4) return { text: '🕯️ תענית אסתר', type: 'fast' }; // מוקדמת ליום ה' כשי"ג חל בשבת
-            }
-            if (fastMonth === 'תמוז' && ((fastDay === 17 && fastDow !== 6) || (fastDay === 18 && fastDow === 0)))
-                return { text: '🕯️ צום שבעה עשר בתמוז', type: 'fast' };
-            if (fastMonth === 'אב' && ((fastDay === 9 && fastDow !== 6) || (fastDay === 10 && fastDow === 0)))
+            // תשעה באב — מוזז (מתחיל בשקיעה, לחומרא כמו יוה"כ) — כולל דחייה כשחל בשבת
+            if (month === 'אב' && ((day === 9 && dow !== 6) || (day === 10 && dow === 0)))
                 return { text: '🕯️ צום תשעה באב', type: 'fast' };
 
-            // ראש חודש (נבדק אחרון — נופל רק אם לא כבר מועד ספציפי יותר, כגון ראש השנה או חנוכה)
+            // ארבעת הצומות הקלים — לא מוזזים; מתחילים מעלות השחר של אותו יום עצמו, לא מהערב הקודם
+            if (civil.month === 'תשרי' && ((civil.day === 3 && cDow !== 6) || (civil.day === 4 && cDow === 0)))
+                return { text: '🕯️ צום גדליה', type: 'fast' };
+            if (civil.month === 'טבת' && civil.day === 10)
+                return { text: '🕯️ עשרה בטבת', type: 'fast' };
+            if (civil.month === 'אדר' || civil.month === 'אדר ב׳') {
+                if (civil.day === 13 && cDow !== 6) return { text: '🕯️ תענית אסתר', type: 'fast' };
+                if (civil.day === 11 && cDow === 4) return { text: '🕯️ תענית אסתר', type: 'fast' }; // מוקדמת ליום ה' כשי"ג חל בשבת
+            }
+            if (civil.month === 'תמוז' && ((civil.day === 17 && cDow !== 6) || (civil.day === 18 && cDow === 0)))
+                return { text: '🕯️ צום שבעה עשר בתמוז', type: 'fast' };
+
+            // ראש חודש — מוזז (התאריך העברי עצמו מתחיל בערב הקודם) — נבדק אחרון, נופל רק אם אין מועד ספציפי יותר
             if (day === 1) return { text: `🌙 ראש חודש ${month}`, type: 'roshchodesh' };
             if (day === 30) {
-                const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrow = new Date(nightDate); tomorrow.setDate(tomorrow.getDate() + 1);
                 const hdTomorrow = getHebDayMonth(tomorrow);
                 if (hdTomorrow.day === 1) return { text: `🌙 ראש חודש ${hdTomorrow.month}`, type: 'roshchodesh' };
             }
@@ -597,16 +604,9 @@
             document.getElementById('shabbat-start').textContent = globalSun.c;
             document.getElementById('shabbat-end').textContent = globalSun.e;
 
-            // ── תג חג / ראש חודש / צום אוטומטי ──
-            const badge = document.getElementById('special-day-badge');
-            const special = config.showAutoHolidayBadge !== false ? getSpecialDayInfo() : null;
-            if (special) {
-                badge.textContent = special.text;
-                badge.className = 'special-day-badge active ' + special.type;
-            } else {
-                badge.textContent = '';
-                badge.className = 'special-day-badge';
-            }
+            // ── תג חג / ראש חודש / צום אוטומטי (לא מוצג בדפי נפטרים — ראה updateBadgeVisibility) ──
+            currentSpecialDay = config.showAutoHolidayBadge !== false ? getSpecialDayInfo() : null;
+            updateBadgeVisibility();
 
             // ── CSS variables לסגנון כרטיסי נפטרים מה-config ──
             const root = document.documentElement;
